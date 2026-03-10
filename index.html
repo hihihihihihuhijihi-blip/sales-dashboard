@@ -1,0 +1,3144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医疗终端事业部销售进度统计</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* 核心配色 - 商务蓝金系 */
+            --color-primary: #1e3a5f;
+            --color-primary-light: #2d5a87;
+            --color-primary-dark: #152a45;
+            --color-accent: #c9a227;
+            --color-accent-light: #e6c76b;
+            --color-success: #2d9a6e;
+            --color-success-light: #4bc38a;
+            --color-warning: #d9a634;
+            --color-danger: #c9453b;
+            --color-bg: #f7f9fc;
+            --color-surface: #ffffff;
+            --color-border: #e1e8f0;
+            --color-text-primary: #1a2738;
+            --color-text-secondary: #5a6b7f;
+            --color-text-muted: #8a9ab0;
+            --shadow-sm: 0 1px 3px rgba(30, 58, 95, 0.08);
+            --shadow-md: 0 4px 12px rgba(30, 58, 95, 0.1);
+            --shadow-lg: 0 8px 24px rgba(30, 58, 95, 0.12);
+            --shadow-xl: 0 16px 48px rgba(30, 58, 95, 0.15);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--color-bg) 0%, #e8f0f8 100%);
+            min-height: 100vh;
+            padding: 24px;
+            color: var(--color-text-primary);
+            line-height: 1.5;
+        }
+
+        /* 主容器 */
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* 页面标题 */
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 28px;
+            color: var(--color-primary);
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+
+        .page-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--color-accent), var(--color-primary));
+            border-radius: 2px;
+        }
+
+        /* Tab容器 */
+        .tabs-container {
+            display: flex;
+            gap: 0;
+            background: var(--color-surface);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            padding: 8px 8px 0 8px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .tab-btn {
+            padding: 14px 36px;
+            background: transparent;
+            border: none;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-bottom: 3px solid transparent;
+            position: relative;
+            font-family: inherit;
+        }
+
+        .tab-btn:hover {
+            color: var(--color-primary);
+            background: rgba(30, 58, 95, 0.04);
+        }
+
+        .tab-btn.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-accent);
+            font-weight: 600;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 20px;
+            right: 20px;
+            height: 3px;
+            background: var(--color-accent);
+            border-radius: 3px 3px 0 0;
+        }
+
+        /* 内容区域 */
+        .content-area {
+            background: var(--color-surface);
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            padding: 28px;
+            box-shadow: var(--shadow-md);
+            overflow-x: auto;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+        }
+
+        .filter-select {
+            padding: 8px 14px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--color-text-primary);
+            background: var(--color-surface);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 100px;
+        }
+
+        .filter-select:hover {
+            border-color: var(--color-primary-light);
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(30, 58, 95, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-light) 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(45, 154, 110, 0.25);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(45, 154, 110, 0.3);
+        }
+
+        .btn-danger {
+            background: rgba(201, 69, 59, 0.1);
+            color: var(--color-danger);
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .btn-danger:hover {
+            background: rgba(201, 69, 59, 0.15);
+        }
+
+        /* 折叠面板 */
+        .edit-panel {
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .edit-panel-header {
+            background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+            color: white;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s;
+        }
+
+        .edit-panel-header:hover {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+        }
+
+        .edit-panel-title {
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .edit-panel-toggle {
+            font-size: 14px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .edit-panel-toggle.collapsed {
+            transform: rotate(-180deg);
+        }
+
+        .edit-panel-content {
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .edit-panel-content.collapsed {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            overflow: hidden;
+        }
+
+        /* 指标卡片网格 */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .metric-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            border: 1px solid var(--color-border);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--color-accent), var(--color-primary));
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .metric-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .metric-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .metric-card-title::before {
+            content: '📍';
+            font-size: 16px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+
+        .metric-input {
+            width: 90px;
+            padding: 8px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--color-text-primary);
+            transition: all 0.2s;
+        }
+
+        .metric-input:hover {
+            border-color: var(--color-primary-light);
+        }
+
+        .metric-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+        }
+
+        .metric-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+
+        /* 数据表格 */
+        .data-table-wrapper {
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .data-table {
+            width: 100%;
+            min-width: 100%;
+            border-collapse: collapse;
+            background: var(--color-surface);
+            font-size: 16px;
+            table-layout: fixed;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 14px 4px;
+            text-align: center;
+            border: 1px solid var(--color-border);
+            word-break: break-word;
+            min-width: 80px;
+            /* 确保列宽固定，不会被内容撑大 */
+            width: 1px;
+            vertical-align: middle;
+        }
+
+        /* 确保饼图/进度条等图形元素在单元格中居中 */
+        .data-table td svg,
+        .data-table td .pie-chart,
+        .data-table td .progress-bar {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .data-table thead th {
+            background: linear-gradient(180deg, #e8f0f8 0%, #dfe9f5 100%);
+            font-weight: 600;
+            color: var(--color-primary);
+            font-size: 20px;
+            letter-spacing: 0.3px;
+            position: relative;
+        }
+
+        .data-table thead th::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--color-primary);
+            opacity: 0.15;
+        }
+
+        .data-table thead tr:first-child th {
+            padding-bottom: 10px;
+        }
+
+        .data-table thead tr:last-child th {
+            border-top: none;
+            padding-top: 10px;
+            padding-bottom: 14px;
+            font-size: 15px;
+            color: var(--color-text-secondary);
+            background: linear-gradient(180deg, #f0f6fc 0%, #f8fafc 100%);
+        }
+
+        .data-table tbody tr {
+            transition: all 0.2s;
+        }
+
+        .data-table tbody tr:nth-child(even) {
+            background: rgba(30, 58, 95, 0.01);
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(30, 58, 95, 0.04);
+            box-shadow: 0 1px 3px rgba(30, 58, 95, 0.05);
+        }
+
+        .data-table tbody td:first-child {
+            font-weight: 600;
+            color: var(--color-primary);
+            background: rgba(30, 58, 95, 0.02);
+        }
+
+        .data-table tfoot tr {
+            background: linear-gradient(135deg, #fef8ed 0%, #fef3e0 100%);
+            font-weight: 600;
+            border-top: 2px solid var(--color-accent);
+        }
+
+        .data-table tfoot td:first-child {
+            color: var(--color-accent);
+            font-weight: 700;
+        }
+
+        /* 设置每列最小宽度 - 自营业务部9列 */
+        #direct-table col {
+            min-width: 90px;
+        }
+        #direct-table col:first-child {
+            min-width: 80px;
+        }
+
+        /* 设置每列最小宽度 - 招商业务部8列 */
+        #investment-table col {
+            min-width: 100px;
+        }
+        #investment-table col:first-child {
+            min-width: 80px;
+        }
+
+        /* 单元格输入框 */
+        .cell-input {
+            width: 100%;
+            min-width: 70px;
+            padding: 10px 4px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 16px;
+            background: transparent;
+            color: var(--color-text-primary);
+            transition: all 0.2s;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        .cell-input:hover {
+            background: rgba(30, 58, 95, 0.03);
+            border-color: rgba(30, 58, 95, 0.1);
+        }
+
+        .cell-input:focus {
+            outline: none;
+            background: var(--color-surface);
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(30, 58, 95, 0.1);
+        }
+
+        /* 导出容器 */
+        .export-container {
+            padding: 24px;
+            background: white;
+        }
+
+        .export-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--color-primary);
+            text-align: center;
+            margin-bottom: 8px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--color-accent);
+        }
+
+        .export-subtitle {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* 饼图 */
+        .pie-chart {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            position: relative;
+            display: inline-block;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .pie-chart::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 26px;
+            height: 26px;
+            background: var(--color-surface);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .pie-percent {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: 700;
+            z-index: 2;
+            color: var(--color-text-primary);
+            text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+        }
+
+        /* 增长额渐变条 */
+        .growth-wrapper {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .growth-value {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .growth-bar {
+            width: 80px;
+            height: 7px;
+            background: var(--color-bg);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .growth-fill {
+            height: 100%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 3px;
+        }
+
+        .growth-fill.positive {
+            background: linear-gradient(90deg, var(--color-success-light), var(--color-success));
+        }
+
+        .growth-fill.negative {
+            background: linear-gradient(90deg, #f0a0a0, var(--color-danger));
+        }
+
+        /* 文字颜色 */
+        .positive { color: var(--color-success); }
+        .negative { color: var(--color-danger); }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+
+            .page-title {
+                font-size: 22px;
+                margin-bottom: 20px;
+            }
+
+            .content-area {
+                padding: 16px;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                flex-wrap: wrap;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--color-bg);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--color-text-muted);
+        }
+
+        /* 快捷操作按钮区域 */
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .quick-actions .btn {
+            flex: 1;
+            min-width: 160px;
+            padding: 12px 16px;
+            font-size: 14px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .quick-actions .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .quick-actions .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+        }
+
+        /* 添加区域按钮区域 */
+        .add-region-section {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1 class="page-title">医疗终端事业部销售进度统计</h1>
+
+        <!-- Tab按钮 -->
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('direct', this)">自营业务部</button>
+            <button class="tab-btn" onclick="switchTab('investment', this)">招商业务部</button>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="content-area">
+            <!-- 工具栏 -->
+            <div class="toolbar">
+                <div class="filter-group">
+                    <div class="filter-item">
+                        <label class="filter-label">月份</label>
+                        <select id="month-selector" class="filter-select" onchange="onMonthChange()">
+                            <option value="1">1月</option>
+                            <option value="2">2月</option>
+                            <option value="3" selected>3月</option>
+                            <option value="4">4月</option>
+                            <option value="5">5月</option>
+                            <option value="6">6月</option>
+                            <option value="7">7月</option>
+                            <option value="8">8月</option>
+                            <option value="9">9月</option>
+                            <option value="10">10月</option>
+                            <option value="11">11月</option>
+                            <option value="12">12月</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label class="filter-label" id="seg-label">D段</label>
+                        <select id="dseg-selector" class="filter-select" onchange="onDSegChange()">
+                            <option value="D1">D1段</option>
+                            <option value="D2" selected>D2段</option>
+                            <option value="D3">D3段</option>
+                            <option value="D4">D4段</option>
+                            <option value="D5">D5段</option>
+                            <option value="D6">D6段</option>
+                            <option value="C1">C1段</option>
+                            <option value="C2">C2段</option>
+                            <option value="C3">C3段</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="exportToPNG()">
+                    <span>📷</span>
+                    <span>导出PNG</span>
+                </button>
+            </div>
+
+            <!-- 自营业务部 -->
+            <div id="direct-tab" class="tab-content active">
+                <!-- 指标编辑面板 -->
+                <div class="edit-panel">
+                    <div class="edit-panel-header" onclick="toggleEditPanel('direct')">
+                        <span class="edit-panel-title">
+                            <span>⚙️</span>
+                            <span>指标维护面板</span>
+                        </span>
+                        <span class="edit-panel-toggle" id="direct-toggle">▼</span>
+                    </div>
+                    <div class="edit-panel-content" id="direct-edit-content">
+                        <div class="add-region-section">
+                            <button class="btn btn-primary" onclick="addRegion('direct')">
+                                <span>➕</span>
+                                <span>添加省区</span>
+                            </button>
+                            <button class="btn btn-success" onclick="triggerExcelUpload('direct')">
+                                <span>📊</span>
+                                <span>导入Excel</span>
+                            </button>
+                            <input type="file" id="excel-upload-direct" accept=".xlsx,.xls" style="display:none" onchange="handleExcelUpload('direct', this)">
+                        </div>
+                        <div id="direct-metrics-container" style="overflow-x: auto;"></div>
+                    </div>
+                </div>
+
+                <!-- 数据表格 -->
+                <div class="data-table-wrapper">
+                    <table class="data-table" id="direct-table">
+                        <colgroup>
+                            <col style="width: 100px;">  <!-- 省区 -->
+                            <col style="width: 100px;">  <!-- 吡美莫司 -->
+                            <col style="width: 100px;">  <!-- 火把花根 -->
+                            <col style="width: 110px;">  <!-- 皮肤处方药 -->
+                            <col style="width: 100px;">  <!-- 皮肤非药 -->
+                            <col style="width: 90px;">   <!-- 总计 -->
+                            <col style="width: 110px;">  <!-- 月销售进度 -->
+                            <col style="width: 110px;">  <!-- D段进度 -->
+                            <col style="width: 140px;">  <!-- vs25均值增长额 -->
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th rowspan="2">省区</th>
+                                <th colspan="4" id="direct-sales-header">3月销售额（万元）</th>
+                                <th rowspan="2">总计</th>
+                                <th rowspan="2" id="direct-progress-header">3月累计<br>销售进度</th>
+                                <th rowspan="2" id="direct-dprogress-header">D2累计<br>销售进度</th>
+                                <th rowspan="2">vs25均值<br>增长额</th>
+                            </tr>
+                            <tr>
+                                <th>吡美莫司</th>
+                                <th>火把花根</th>
+                                <th>皮肤处方药</th>
+                                <th>皮肤非药</th>
+                            </tr>
+                        </thead>
+                        <tbody id="direct-tbody"></tbody>
+                        <tfoot id="direct-tfoot"></tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 招商业务部 -->
+            <div id="investment-tab" class="tab-content">
+                <!-- 指标编辑面板 -->
+                <div class="edit-panel">
+                    <div class="edit-panel-header" onclick="toggleEditPanel('investment')">
+                        <span class="edit-panel-title">
+                            <span>⚙️</span>
+                            <span>销售额录入</span>
+                        </span>
+                        <span class="edit-panel-toggle" id="investment-toggle">▼</span>
+                    </div>
+                    <div class="edit-panel-content" id="investment-edit-content">
+                        <div class="add-region-section">
+                            <button class="btn btn-primary" onclick="addRegion('investment')">
+                                <span>➕</span>
+                                <span>添加省区</span>
+                            </button>
+                            <button class="btn btn-success" onclick="triggerExcelUpload('investment')">
+                                <span>📊</span>
+                                <span>导入Excel</span>
+                            </button>
+                            <input type="file" id="excel-upload-investment" accept=".xlsx,.xls" style="display:none" onchange="handleExcelUpload('investment', this)">
+                        </div>
+                        <div id="investment-metrics-container" style="overflow-x: auto;"></div>
+                    </div>
+                </div>
+
+                <!-- 产品明细编辑面板 -->
+                <div class="edit-panel">
+                    <div class="edit-panel-header" onclick="toggleProductDetailPanel('investment')">
+                        <span class="edit-panel-title">
+                            <span>📝</span>
+                            <span>销售进度</span>
+                        </span>
+                        <span class="edit-panel-toggle" id="investment-product-toggle">▼</span>
+                    </div>
+                    <div class="edit-panel-content" id="investment-product-content" style="display: none;">
+                        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">点击表格单元格即可编辑各区域的产品销售额、指标和累计销售额</p>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table" id="investment-product-table">
+                                <colgroup>
+                                    <col style="width: 90px;">   <!-- 区域 -->
+                                    <col style="width: 80px;">   <!-- 产品A -->
+                                    <col style="width: 80px;">   <!-- 产品B -->
+                                    <col style="width: 80px;">   <!-- 产品C -->
+                                    <col style="width: 75px;">   <!-- 合计 -->
+                                    <col style="width: 85px;">   <!-- 3月指标 -->
+                                    <col style="width: 100px;">  <!-- 累计销售额 -->
+                                    <col style="width: 80px;">   <!-- C1指标 -->
+                                    <col style="width: 100px;">  <!-- C1累计销售额 -->
+                                    <col style="width: 90px;">   <!-- 销售进度 -->
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th>区域</th>
+                                        <th>产品A</th>
+                                        <th>产品B</th>
+                                        <th>产品C</th>
+                                        <th>合计</th>
+                                        <th id="product-monthly-target">3月指标</th>
+                                        <th>累计销售额</th>
+                                        <th id="product-c-segment-target">C1指标</th>
+                                        <th id="product-c-segment-sales">C1累计销售额</th>
+                                        <th>销售进度</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="investment-product-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据表格 -->
+                <div class="data-table-wrapper">
+                    <table class="data-table" id="investment-table">
+                        <colgroup>
+                            <col style="width: 100px;">  <!-- 区域 -->
+                            <col style="width: 90px;">   <!-- 月指标 -->
+                            <col style="width: 110px;">  <!-- 月累计销售额 -->
+                            <col style="width: 110px;">  <!-- 月销售进度 -->
+                            <col style="width: 90px;">   <!-- C段指标 -->
+                            <col style="width: 110px;">  <!-- C段累计销售额 -->
+                            <col style="width: 110px;">  <!-- C段销售进度 -->
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>区域</th>
+                                <th id="investment-month-target-header">3月指标</th>
+                                <th id="investment-month-sales-header">3月累计销售额</th>
+                                <th id="investment-month-progress-header">3月销售进度</th>
+                                <th id="investment-d-target-header">C1指标</th>
+                                <th id="investment-d-sales-header">C1累计销售额</th>
+                                <th id="investment-d-progress-header">C1销售进度</th>
+                            </tr>
+                        </thead>
+                        <tbody id="investment-tbody"></tbody>
+                        <tfoot id="investment-tfoot"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DIRECT_PRODUCTS = ['吡美莫司', '火把花根', '皮肤处方药', '皮肤非药'];
+        const INVESTMENT_PRODUCTS = ['产品A', '产品B', '产品C'];
+
+        // 可变区域列表
+        let directRegions = ['浙江', '上海', '东北', '华北', '华中', '江苏', '华南', '北京'];
+        let investmentRegions = ['山东', '西南', '豫晋蒙', '华东', '西北', '东北', '江苏', '华南', '京津冀', '粤琼'];
+
+        // 按月存储的产品明细数据：monthlyData[month][region][product]
+        let directMonthlyData = {};
+        let investmentMonthlyData = {};
+
+        // 当前显示的销售额数据（指向当前选中月份的数据）
+        let directData = {};
+        let investmentData = {};
+
+        // 按月存储的销售额总计：monthlySales[month][region]
+        let directMonthlySales = {};
+        let investmentMonthlySales = {};
+
+        let directLastYear = {};
+        // 按月存储指标：directTarget[month][region]
+        let directTarget = {};
+        // 按D段存储指标：directDTarget[dSeg][region]
+        let directDTarget = {};
+        let directDSales = {}; // D段累计销售额（现在自动计算）
+        let investmentLastYear = {};
+        let investmentTarget = {};
+        let investmentDTarget = {};
+        let investmentCSales = {}; // C段累计销售额（手动输入）
+        let investmentDSales = {};
+
+        // 选择的月份和D段
+        let selectedMonth = 3;
+        let selectedDSeg = 'D2';
+
+        // ========== localStorage 数据持久化 ==========
+
+        const DATA_VERSION = 'v4'; // 数据版本号
+
+        // 保存所有数据到localStorage
+        function saveData() {
+            const dataToSave = {
+                version: DATA_VERSION,
+                directRegions,
+                investmentRegions,
+                directMonthlyData,
+                directMonthlySales,
+                directLastYear,
+                directTarget,
+                directDTarget,
+                investmentMonthlyData,
+                investmentMonthlySales,
+                investmentLastYear,
+                investmentTarget,
+                investmentDTarget,
+                investmentCSales,
+                selectedMonth,
+                selectedDSeg
+            };
+            localStorage.setItem('salesDashboardData', JSON.stringify(dataToSave));
+        }
+
+        // 从localStorage加载数据
+        function loadData() {
+            const savedData = localStorage.getItem('salesDashboardData');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    // 检查数据版本，旧版本数据进行迁移
+                    if (data.version !== DATA_VERSION) {
+                        // v3 迁移到 v4：将 directData 转换为 directMonthlyData
+                        if (data.version === 'v3') {
+                            console.log('检测到 v3 数据，正在迁移到 v4...');
+                            const savedMonth = data.selectedMonth || 3;
+
+                            // 迁移自营数据
+                            if (data.directData && Object.keys(data.directData).length > 0) {
+                                data.directMonthlyData = {};
+                                data.directMonthlyData[savedMonth] = data.directData;
+                            }
+
+                            // 迁移招商数据
+                            if (data.investmentData && Object.keys(data.investmentData).length > 0) {
+                                data.investmentMonthlyData = {};
+                                data.investmentMonthlyData[savedMonth] = data.investmentData;
+                            }
+
+                            // 更新版本号
+                            data.version = DATA_VERSION;
+                            // 保存迁移后的数据
+                            localStorage.setItem('salesDashboardData', JSON.stringify(data));
+                            console.log('数据迁移完成');
+                        } else {
+                            console.log('数据版本不兼容，清除旧数据');
+                            localStorage.removeItem('salesDashboardData');
+                            return false;
+                        }
+                    }
+                    // 恢复所有数据
+                    directRegions = data.directRegions || ['浙江', '上海', '东北', '华北', '华中', '江苏', '华南', '北京'];
+                    investmentRegions = data.investmentRegions || ['山东', '西南', '豫晋蒙', '华东', '西北', '东北', '江苏', '华南', '京津冀', '粤琼'];
+                    directMonthlyData = data.directMonthlyData || {};
+                    directMonthlySales = data.directMonthlySales || {};
+                    directLastYear = data.directLastYear || {};
+                    directTarget = data.directTarget || {};
+                    directDTarget = data.directDTarget || {};
+                    investmentMonthlyData = data.investmentMonthlyData || {};
+                    investmentMonthlySales = data.investmentMonthlySales || {};
+                    investmentLastYear = data.investmentLastYear || {};
+                    investmentTarget = data.investmentTarget || {};
+                    investmentDTarget = data.investmentDTarget || {};
+                    investmentCSales = data.investmentCSales || {};
+                    selectedMonth = data.selectedMonth || 3;
+                    selectedDSeg = data.selectedDSeg || 'D2';
+
+                    // 确保当前月份数据完整存在，如果不存在则初始化
+                    if (!directMonthlyData[selectedMonth]) {
+                        directMonthlyData[selectedMonth] = {};
+                    }
+                    // 确保所有区域的数据都完整
+                    directRegions.forEach(region => {
+                        if (!directMonthlyData[selectedMonth][region]) {
+                            directMonthlyData[selectedMonth][region] = {
+                                '吡美莫司': 0, '火把花根': 0, '皮肤处方药': 0, '皮肤非药': 0
+                            };
+                        }
+                        // 确保每个产品都有值（防止数据不完整）
+                        DIRECT_PRODUCTS.forEach(p => {
+                            if (directMonthlyData[selectedMonth][region][p] === undefined) {
+                                directMonthlyData[selectedMonth][region][p] = 0;
+                            }
+                        });
+                    });
+                    directData = directMonthlyData[selectedMonth];
+
+                    if (!investmentMonthlyData[selectedMonth]) {
+                        investmentMonthlyData[selectedMonth] = {};
+                    }
+                    // 确保所有区域的数据都完整
+                    investmentRegions.forEach(region => {
+                        if (!investmentMonthlyData[selectedMonth][region]) {
+                            investmentMonthlyData[selectedMonth][region] = {
+                                '产品A': 0, '产品B': 0, '产品C': 0
+                            };
+                        }
+                        // 确保每个产品都有值（防止数据不完整）
+                        if (investmentMonthlyData[selectedMonth][region]['产品A'] === undefined) {
+                            investmentMonthlyData[selectedMonth][region]['产品A'] = 0;
+                        }
+                        if (investmentMonthlyData[selectedMonth][region]['产品B'] === undefined) {
+                            investmentMonthlyData[selectedMonth][region]['产品B'] = 0;
+                        }
+                        if (investmentMonthlyData[selectedMonth][region]['产品C'] === undefined) {
+                            investmentMonthlyData[selectedMonth][region]['产品C'] = 0;
+                        }
+                    });
+                    investmentData = investmentMonthlyData[selectedMonth];
+
+                    // 确保月度销售额数据结构完整（所有月份都有对象）
+                    for (let m = 1; m <= 12; m++) {
+                        if (!investmentMonthlySales[m]) {
+                            investmentMonthlySales[m] = {};
+                        }
+                    }
+
+                    // 同步段选择器的选项和标签（在 DOMContentLoaded 后执行）
+                    setTimeout(() => {
+                        const selector = document.getElementById('dseg-selector');
+                        const label = document.getElementById('seg-label');
+                        if (selector && label) {
+                            const isCSeg = selectedDSeg.startsWith('C');
+                            label.textContent = isCSeg ? 'C段' : 'D段';
+
+                            // 更新段选择器的选项
+                            if (isCSeg) {
+                                selector.innerHTML = `
+                                    <option value="C1">C1段</option>
+                                    <option value="C2">C2段</option>
+                                    <option value="C3">C3段</option>
+                                `;
+                            } else {
+                                selector.innerHTML = `
+                                    <option value="D1">D1段</option>
+                                    <option value="D2">D2段</option>
+                                    <option value="D3">D3段</option>
+                                    <option value="D4">D4段</option>
+                                    <option value="D5">D5段</option>
+                                    <option value="D6">D6段</option>
+                                `;
+                            }
+                            // 恢复选中的值
+                            selector.value = selectedDSeg;
+                        }
+                    }, 0);
+
+                    return true; // 成功加载数据
+                } catch (e) {
+                    console.error('加载数据失败:', e);
+                    return false;
+                }
+            }
+            return false; // 没有保存的数据
+        }
+
+        // 修改initData函数，优先从localStorage加载
+        function initData() {
+            // 尝试从localStorage加载
+            if (loadData()) {
+                // 恢复月份和D段选择器的值
+                document.getElementById('month-selector').value = selectedMonth;
+                document.getElementById('dseg-selector').value = selectedDSeg;
+                return;
+            }
+
+            // 没有保存的数据，使用默认值
+            // 初始化自营业务部数据
+            directLastYear = {
+                '浙江': 19, '上海': 37, '东北': 49, '华北': 50,
+                '华中': 88, '江苏': 116, '华南': 98, '北京': 92
+            };
+
+            // 按月存储指标：directTarget[月][省区]
+            directTarget = {};
+            for (let m = 1; m <= 12; m++) {
+                directTarget[m] = {
+                    '浙江': 120, '上海': 150, '东北': 80, '华北': 70,
+                    '华中': 130, '江苏': 160, '华南': 140, '北京': 150
+                };
+            }
+
+            // 按D段存储指标：directDTarget[D段][省区]
+            directDTarget = {};
+            ['D1', 'D2', 'D3', 'D4', 'D5', 'D6'].forEach(d => {
+                directDTarget[d] = {
+                    '浙江': 60, '上海': 75, '东北': 40, '华北': 35,
+                    '华中': 65, '江苏': 80, '华南': 70, '北京': 75
+                };
+            });
+
+            // 按月存储产品明细和总计
+            directMonthlyData = {};
+            directMonthlySales = {};
+            for (let m = 1; m <= 12; m++) {
+                directMonthlyData[m] = {};
+                directMonthlySales[m] = {};
+                directRegions.forEach(region => {
+                    // 生成产品明细
+                    directMonthlyData[m][region] = {
+                        '吡美莫司': m === 3 ? 8 : Math.floor(Math.random() * 15),
+                        '火把花根': m === 3 ? 0 : Math.floor(Math.random() * 10),
+                        '皮肤处方药': m === 3 ? 0 : Math.floor(Math.random() * 10),
+                        '皮肤非药': m === 3 ? 0 : Math.floor(Math.random() * 5)
+                    };
+                    // 计算月度总计
+                    directMonthlySales[m][region] = calculateRowTotal(directMonthlyData[m], region, DIRECT_PRODUCTS);
+                });
+            }
+
+            // 设置当前月份的数据引用（3月）
+            directData = directMonthlyData[selectedMonth];
+
+            // 初始化招商业务部数据
+            investmentLastYear = {};
+            investmentRegions.forEach(region => {
+                investmentLastYear[region] = Math.floor(Math.random() * 50) + 30;
+            });
+
+            // 招商业务部按月存储指标
+            investmentTarget = {};
+            for (let m = 1; m <= 12; m++) {
+                investmentTarget[m] = {};
+                investmentRegions.forEach(region => {
+                    investmentTarget[m][region] = Math.floor(Math.random() * 50) + 80;
+                });
+            }
+
+            // 招商业务部按C段存储指标
+            investmentDTarget = {};
+            ['C1', 'C2', 'C3'].forEach(c => {
+                investmentDTarget[c] = {};
+                investmentRegions.forEach(region => {
+                    investmentDTarget[c][region] = Math.floor(Math.random() * 30) + 40;
+                });
+            });
+
+            // 按月存储产品明细和总计
+            investmentMonthlyData = {};
+            investmentMonthlySales = {};
+            for (let m = 1; m <= 12; m++) {
+                investmentMonthlyData[m] = {};
+                investmentMonthlySales[m] = {};
+                investmentRegions.forEach(region => {
+                    // 生成产品明细
+                    investmentMonthlyData[m][region] = {
+                        '产品A': Math.floor(Math.random() * 15) + 5,
+                        '产品B': Math.floor(Math.random() * 15) + 5,
+                        '产品C': Math.floor(Math.random() * 10) + 3
+                    };
+                    // 计算月度总计
+                    investmentMonthlySales[m][region] = calculateRowTotal(investmentMonthlyData[m], region, INVESTMENT_PRODUCTS);
+                });
+            }
+
+            // 设置当前月份的数据引用
+            investmentData = investmentMonthlyData[selectedMonth];
+        }
+
+        // 获取当前月的指标值
+        function getCurrentTarget(type, region) {
+            if (type === 'direct') {
+                return directTarget[selectedMonth]?.[region] || 0;
+            } else {
+                return investmentTarget[selectedMonth]?.[region] || 0;
+            }
+        }
+
+        // 获取当前D段的指标值
+        function getCurrentDTarget(type, region) {
+            if (type === 'direct') {
+                return directDTarget[selectedDSeg]?.[region] || 0;
+            } else {
+                return investmentDTarget[selectedDSeg]?.[region] || 0;
+            }
+        }
+
+        // 获取当前D段/C段的累计销售额
+        // 自营业务部: D1=1月+2月, D2=3月+4月, D3=5月+6月, D4=7月+8月, D5=9月+10月, D6=11月+12月
+        // 招商业务部: C1=1-4月, C2=5-8月, C3=9-12月
+        // 当月在段内时，只累计到当前月
+        function getCurrentDSales(type, region) {
+            const monthlySales = type === 'direct' ? directMonthlySales : investmentMonthlySales;
+            const data = type === 'direct' ? directData : investmentData;
+            const products = type === 'direct' ? DIRECT_PRODUCTS : INVESTMENT_PRODUCTS;
+            const segNum = parseInt(selectedDSeg.substring(1)); // D2/C2 -> 2
+            const currentMonth = selectedMonth;
+
+            let startMonth, endMonth;
+
+            if (type === 'direct') {
+                // 自营业务部: D段，2个月为一个周期
+                startMonth = (segNum - 1) * 2 + 1;
+                endMonth = startMonth + 1;
+            } else {
+                // 招商业务部: C段，4个月为一个周期
+                startMonth = (segNum - 1) * 4 + 1;
+                endMonth = startMonth + 3;
+            }
+
+            // 累计从起始月到当前月的销售额（但不超出段的结束月）
+            let total = 0;
+            for (let m = startMonth; m <= Math.min(endMonth, currentMonth); m++) {
+                // 优先使用手动输入的月度累计销售额
+                total += monthlySales[m]?.[region] || 0;
+            }
+
+            return total;
+        }
+
+        // 设置当前月的指标值
+        function setCurrentTarget(type, region, value) {
+            if (type === 'direct') {
+                if (!directTarget[selectedMonth]) directTarget[selectedMonth] = {};
+                directTarget[selectedMonth][region] = value;
+            } else {
+                if (!investmentTarget[selectedMonth]) investmentTarget[selectedMonth] = {};
+                investmentTarget[selectedMonth][region] = value;
+            }
+        }
+
+        // 设置当前D段的指标值
+        function setCurrentDTarget(type, region, value) {
+            if (type === 'direct') {
+                if (!directDTarget[selectedDSeg]) directDTarget[selectedDSeg] = {};
+                directDTarget[selectedDSeg][region] = value;
+            } else {
+                if (!investmentDTarget[selectedDSeg]) investmentDTarget[selectedDSeg] = {};
+                investmentDTarget[selectedDSeg][region] = value;
+            }
+        }
+
+        function toggleEditPanel(type) {
+            const content = document.getElementById(type + '-edit-content');
+            const toggle = document.getElementById(type + '-toggle');
+            content.classList.toggle('collapsed');
+            toggle.classList.toggle('collapsed');
+        }
+
+        function toggleProductDetailPanel(type) {
+            const content = document.getElementById(type + '-product-content');
+            const toggle = document.getElementById(type + '-product-toggle');
+            const isCollapsed = content.style.display === 'none';
+            content.style.display = isCollapsed ? 'block' : 'none';
+            toggle.textContent = isCollapsed ? '▲' : '▼';
+            if (isCollapsed && type === 'investment') {
+                // 强制重新渲染产品明细表格，确保显示最新数据
+                renderInvestmentProductTable();
+            }
+        }
+
+        function renderInvestmentProductTable() {
+            const tbody = document.getElementById('investment-product-tbody');
+            if (!tbody) return;
+
+            const monthText = selectedMonth + '月';
+            const cSegText = selectedDSeg;
+
+            let tbodyHtml = '';
+
+            investmentRegions.forEach(region => {
+                // 计算当前行销售总额
+                const rowTotal = calculateRowTotal(investmentData, region, INVESTMENT_PRODUCTS);
+                // 获取当前区域的月度指标
+                const target = getCurrentTarget('investment', region);
+                // 获取当前区域的C段指标
+                const cTarget = getCurrentDTarget('investment', region);
+                // 获取当前区域的月度累计销售额（从指标维护面板读取）
+                const monthlySales = investmentMonthlySales[selectedMonth]?.[region] || 0;
+                // 获取C段累计销售额（自动计算）
+                const cSales = getCurrentCSales(region);
+                // 计算销售进度：累计销售额 / 指标
+                const progress = target > 0 ? ((monthlySales / target) * 100) : 0;
+
+                tbodyHtml += `<tr>
+                    <td><strong>${region}</strong></td>`;
+                INVESTMENT_PRODUCTS.forEach(p => {
+                    tbodyHtml += `<td><input type="number" class="cell-input" value="${investmentData[region]?.[p] || 0}"
+                        oninput="updateInvestmentData('${region}', '${p}', this.value)"></td>`;
+                });
+                tbodyHtml += `<td><strong>${rowTotal.toFixed(1)}</strong></td>`;
+                // 月度指标（当前区域，可编辑）
+                tbodyHtml += `<td><input type="number" class="cell-input" value="${target}"
+                    onchange="updateRegionTarget('investment', '${region}', 'target', this.value); updateProductTableProgress('${region}');"></td>`;
+                // 月度累计销售额（当前区域，可编辑）
+                tbodyHtml += `<td><input type="number" class="cell-input" value="${monthlySales.toFixed(1)}"
+                    onchange="updateRegionMonthlySales('investment', '${region}', this.value); updateProductTableProgress('${region}');"></td>`;
+                // C段指标（当前区域，可编辑）
+                tbodyHtml += `<td><input type="number" class="cell-input" value="${cTarget}"
+                    onchange="updateRegionTarget('investment', '${region}', 'dTarget', this.value);"></td>`;
+                // C段累计销售额（自动计算，只读）
+                tbodyHtml += `<td id="product-csales-${region}" style="text-align: center; font-weight: 600; color: #1e3a5f;">${cSales.toFixed(1)}</td>`;
+                // 销售进度
+                tbodyHtml += `<td id="product-progress-${region}">${progress.toFixed(1)}%</td>`;
+                tbodyHtml += '</tr>';
+            });
+
+            tbody.innerHTML = tbodyHtml;
+
+            // 更新表头中的月份和C段
+            document.getElementById('product-monthly-target').textContent = monthText + '指标';
+            document.getElementById('product-c-segment-target').textContent = cSegText + '指标';
+            document.getElementById('product-c-segment-sales').textContent = cSegText + '累计销售额';
+        }
+
+        // 更新产品明细表格中的销售进度显示
+        function updateProductTableProgress(region) {
+            const progressCell = document.getElementById('product-progress-' + region);
+            if (!progressCell) return;
+
+            const target = getCurrentTarget('investment', region);
+            const monthlySales = investmentMonthlySales[selectedMonth]?.[region] || 0;
+            const progress = target > 0 ? ((monthlySales / target) * 100) : 0;
+            progressCell.textContent = progress.toFixed(1) + '%';
+
+            // 同时更新C段累计销售额显示
+            updateProductCSalesDisplay(region);
+        }
+
+        // 更新产品明细表格中的C段累计销售额显示
+        function updateProductCSalesDisplay(region) {
+            const csalesCell = document.getElementById('product-csales-' + region);
+            if (csalesCell) {
+                const cSales = getCurrentCSales(region);
+                csalesCell.textContent = cSales.toFixed(1);
+            }
+        }
+
+        // 获取C段累计销售额（自动计算）
+        function getCurrentCSales(region) {
+            // 直接使用自动计算的值（基于指标维护面板输入的月度数据）
+            return getCurrentDSales('investment', region);
+        }
+
+        // 更新区域C段累计销售额（已废弃，保留以免报错）
+        function updateRegionCSales(region, value) {
+            // C段累计销售额现在自动计算，不再支持手动修改
+            // 此函数保留仅为兼容性，不做任何操作
+        }
+
+        // 更新区域月度累计销售额
+        function updateRegionMonthlySales(type, region, value) {
+            const numValue = parseFloat(value) || 0;
+            if (type === 'investment') {
+                if (!investmentMonthlySales[selectedMonth]) investmentMonthlySales[selectedMonth] = {};
+                investmentMonthlySales[selectedMonth][region] = numValue;
+                // 同时更新指标维护面板的对应输入框
+                updateMetricsPanelMonthSalesInput(region, selectedMonth, numValue);
+            } else {
+                if (!directMonthlySales[selectedMonth]) directMonthlySales[selectedMonth] = {};
+                directMonthlySales[selectedMonth][region] = numValue;
+            }
+            saveData();
+            // 刷新主表格以显示更新后的数据
+            renderTable(type);
+
+            // 如果是招商业务部，同时更新C段累计销售额和进度
+            if (type === 'investment') {
+                updateProductCSalesDisplay(region);
+                updateProductTableProgress(region);
+            }
+        }
+
+        // 更新区域销售额（用于手动覆盖月度总计）
+        function updateRegionSales(type, region, value) {
+            // 这里暂不实现，因为销售额应该由产品明细自动计算
+            // 如果需要手动调整，可以考虑添加
+        }
+
+        function switchTab(tabName, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+            if (btnElement) {
+                btnElement.classList.add('active');
+            } else {
+                // 如果没有传入按钮元素，通过tabName查找对应按钮
+                const buttons = document.querySelectorAll('.tab-btn');
+                buttons.forEach(btn => {
+                    if (btn.textContent.includes(tabName === 'direct' ? '自营' : '招商')) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            // 更新段选择器
+            updateSegSelector(tabName);
+        }
+
+        function updateSegSelector(tabName) {
+            const selector = document.getElementById('dseg-selector');
+            const label = document.getElementById('seg-label');
+            const currentValue = selector.value;
+
+            if (tabName === 'investment') {
+                // 招商业务部: 显示C段选项
+                label.textContent = 'C段';
+                selector.innerHTML = `
+                    <option value="C1">C1段</option>
+                    <option value="C2">C2段</option>
+                    <option value="C3">C3段</option>
+                `;
+                // 根据当前月份计算正确的C段
+                const cNum = Math.ceil(selectedMonth / 4);
+                const correctCSeg = 'C' + cNum;
+                if (!currentValue.startsWith('C') || currentValue !== correctCSeg) {
+                    selector.value = correctCSeg;
+                    selectedDSeg = correctCSeg;
+                } else {
+                    selector.value = currentValue;
+                }
+            } else {
+                // 自营业务部: 显示D段选项
+                label.textContent = 'D段';
+                selector.innerHTML = `
+                    <option value="D1">D1段</option>
+                    <option value="D2">D2段</option>
+                    <option value="D3">D3段</option>
+                    <option value="D4">D4段</option>
+                    <option value="D5">D5段</option>
+                    <option value="D6">D6段</option>
+                `;
+                // 根据当前月份计算正确的D段
+                const dNum = Math.ceil(selectedMonth / 2);
+                const correctDSeg = 'D' + dNum;
+                if (!currentValue.startsWith('D') || currentValue !== correctDSeg) {
+                    selector.value = correctDSeg;
+                    selectedDSeg = correctDSeg;
+                } else {
+                    selector.value = currentValue;
+                }
+            }
+
+            // 更新表格和指标面板
+            updateTableHeaders();
+            if (tabName === 'direct') {
+                renderMetricsPanel('direct');
+                renderDirectTable();
+            } else {
+                renderMetricsPanel('investment');
+                renderInvestmentTable();
+            }
+        }
+
+        // 月份变化处理
+        function onMonthChange() {
+            const prevMonth = selectedMonth;
+            const newMonth = parseInt(document.getElementById('month-selector').value);
+
+            // 保存自营业务部当前月份的产品明细和总计
+            if (!directMonthlyData[prevMonth]) directMonthlyData[prevMonth] = {};
+            directRegions.forEach(region => {
+                // 保存产品明细
+                if (!directMonthlyData[prevMonth][region]) directMonthlyData[prevMonth][region] = {};
+                DIRECT_PRODUCTS.forEach(p => {
+                    directMonthlyData[prevMonth][region][p] = directData[region]?.[p] || 0;
+                });
+                // 保存月度总计
+                if (!directMonthlySales[prevMonth]) directMonthlySales[prevMonth] = {};
+                directMonthlySales[prevMonth][region] = calculateRowTotal(directData, region, DIRECT_PRODUCTS);
+            });
+
+            // 保存招商业务部当前月份的产品明细和总计
+            if (!investmentMonthlyData[prevMonth]) investmentMonthlyData[prevMonth] = {};
+            investmentRegions.forEach(region => {
+                // 保存产品明细
+                if (!investmentMonthlyData[prevMonth][region]) investmentMonthlyData[prevMonth][region] = {};
+                INVESTMENT_PRODUCTS.forEach(p => {
+                    investmentMonthlyData[prevMonth][region][p] = investmentData[region]?.[p] || 0;
+                });
+                // 注意：不再覆盖月度总计，因为月度总计由指标维护面板输入控制
+            });
+
+            // 切换月份
+            selectedMonth = newMonth;
+
+            // 自动更新段选择器（根据当前选中的tab）
+            autoUpdateDSeg();
+
+            // 加载自营业务部新月份的数据（如果不存在则初始化）
+            if (!directMonthlyData[selectedMonth]) {
+                directMonthlyData[selectedMonth] = {};
+                directRegions.forEach(region => {
+                    directMonthlyData[selectedMonth][region] = {
+                        '吡美莫司': 0, '火把花根': 0, '皮肤处方药': 0, '皮肤非药': 0
+                    };
+                });
+            }
+            directData = directMonthlyData[selectedMonth];
+
+            // 加载招商业务部新月份的数据（如果不存在则初始化）
+            if (!investmentMonthlyData[selectedMonth]) {
+                investmentMonthlyData[selectedMonth] = {};
+                investmentRegions.forEach(region => {
+                    investmentMonthlyData[selectedMonth][region] = {
+                        '产品A': 0, '产品B': 0, '产品C': 0
+                    };
+                });
+            }
+            investmentData = investmentMonthlyData[selectedMonth];
+
+            updateTableHeaders();
+            renderMetricsPanel('direct');
+            renderMetricsPanel('investment');
+            renderDirectTable();
+            renderInvestmentTable();
+
+            // 如果产品明细面板是打开的，也刷新它
+            const productContent = document.getElementById('investment-product-content');
+            if (productContent && productContent.style.display !== 'none') {
+                renderInvestmentProductTable();
+            }
+
+            saveData(); // 保存数据
+        }
+
+        // 根据当前月份自动更新段选择器
+        function autoUpdateDSeg() {
+            const isDirectTab = document.getElementById('direct-tab').classList.contains('active');
+            let newSeg;
+
+            if (isDirectTab) {
+                // 自营业务部: D段，2个月/段
+                const dNum = Math.ceil(selectedMonth / 2);
+                newSeg = 'D' + dNum;
+            } else {
+                // 招商业务部: C段，4个月/段
+                const cNum = Math.ceil(selectedMonth / 4);
+                newSeg = 'C' + cNum;
+            }
+
+            // 更新选择器和全局变量
+            document.getElementById('dseg-selector').value = newSeg;
+            selectedDSeg = newSeg;
+        }
+
+        // D段变化处理
+        function onDSegChange() {
+            selectedDSeg = document.getElementById('dseg-selector').value;
+            updateTableHeaders();
+            renderMetricsPanel('direct');
+            renderMetricsPanel('investment');
+            renderDirectTable();
+            renderInvestmentTable();
+
+            // 如果产品明细面板是打开的，也刷新它
+            const productContent = document.getElementById('investment-product-content');
+            if (productContent && productContent.style.display !== 'none') {
+                renderInvestmentProductTable();
+            }
+
+            saveData(); // 保存数据
+        }
+
+        // 更新表格表头
+        function updateTableHeaders() {
+            const monthText = selectedMonth + '月';
+            const dSegText = selectedDSeg;
+
+            document.getElementById('direct-sales-header').textContent = monthText + '销售额（万元）';
+            document.getElementById('direct-progress-header').innerHTML = monthText + '累计<br>销售进度';
+            document.getElementById('direct-dprogress-header').innerHTML = dSegText + '累计<br>销售进度';
+
+            // 招商业务部新表头
+            document.getElementById('investment-month-target-header').textContent = monthText + '指标';
+            document.getElementById('investment-month-sales-header').textContent = monthText + '累计销售额';
+            document.getElementById('investment-month-progress-header').textContent = monthText + '销售进度';
+            document.getElementById('investment-d-target-header').textContent = dSegText + '指标';
+            document.getElementById('investment-d-sales-header').textContent = dSegText + '累计销售额';
+            document.getElementById('investment-d-progress-header').textContent = dSegText + '销售进度';
+        }
+
+        function getPieColor(percent) {
+            // 超过100%用深绿色
+            if (percent > 100) return '#1e7e44';
+            if (percent >= 50) return '#2d9a6e';
+            if (percent >= 20) return '#d9a634';
+            return '#c9453b';
+        }
+
+        // 生成SVG饼图HTML
+        function getPieChartHtml(percent, size = 48) {
+            const percentValue = parseFloat(percent) || 0;
+            const color = getPieColor(percentValue);
+            const bgColor = '#e1e8f0';
+            const radius = size / 2;
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const innerRadius = size * 0.26; // 内圆半径
+
+            // 限制显示角度最大100%
+            const displayPercent = Math.min(percentValue, 100);
+            const angle = (displayPercent / 100) * 360;
+
+            // 转换为弧度
+            const startAngle = -90; // 从12点方向开始
+            const endAngle = startAngle + angle;
+
+            const startRad = (startAngle * Math.PI) / 180;
+            const endRad = (endAngle * Math.PI) / 180;
+
+            // SVG路径数据
+            let pathData;
+            if (displayPercent >= 100) {
+                // 完整圆环
+                pathData = `M ${centerX - radius},${centerY}
+                           a ${radius},${radius} 0 1,0 ${radius * 2},0
+                           a ${radius},${radius} 0 1,0 ${-radius * 2},0
+                           M ${centerX - innerRadius},${centerY}
+                           a ${innerRadius},${innerRadius} 0 1,0 ${innerRadius * 2},0
+                           a ${innerRadius},${innerRadius} 0 1,0 ${-innerRadius * 2},0`;
+            } else if (displayPercent <= 0) {
+                // 完全灰色背景（只有圆环）
+                pathData = '';
+            } else {
+                // 计算外圆弧的起点和终点
+                const x1 = centerX + radius * Math.cos(startRad);
+                const y1 = centerY + radius * Math.sin(startRad);
+                const x2 = centerX + radius * Math.cos(endRad);
+                const y2 = centerY + radius * Math.sin(endRad);
+
+                // 计算内圆弧的起点和终点
+                const x1_inner = centerX + innerRadius * Math.cos(startRad);
+                const y1_inner = centerY + innerRadius * Math.sin(startRad);
+                const x2_inner = centerX + innerRadius * Math.cos(endRad);
+                const y2_inner = centerY + innerRadius * Math.sin(endRad);
+
+                const largeArcFlag = angle > 180 ? 1 : 0;
+
+                // 扇形
+                pathData = `M ${x1},${y1}
+                           A ${radius},${radius} 0 ${largeArcFlag},1 ${x2},${y2}
+                           L ${x2_inner},${y2_inner}
+                           A ${innerRadius},${innerRadius} 0 ${largeArcFlag},0 ${x1_inner},${y1_inner}
+                           Z`;
+            }
+
+            // 超过100%用黑色，字体大小保持一致
+            const fontSize = 12; // 统一字体大小
+            // 超过100%用黑色，其他用原色
+            const textColor = percentValue > 100 ? '#000000' : color;
+
+            const svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="${bgColor}"/>
+                ${pathData ? `<path d="${pathData}" fill="${color}"/>` : ''}
+                <text x="${centerX}" y="${centerY}"
+                      text-anchor="middle"
+                      dominant-baseline="central"
+                      font-size="${fontSize}"
+                      font-weight="700"
+                      fill="${textColor}">${Math.round(percentValue)}%</text>
+            </svg>`;
+
+            return svg;
+        }
+
+        // 生成进度条HTML
+        function getProgressBarHtml(percent, width = 80, height = 16) {
+            const percentValue = parseFloat(percent) || 0;
+            const displayPercent = Math.min(Math.max(percentValue, 0), 100);
+            const color = getPieColor(percentValue);
+            const bgColor = '#e1e8f0';
+
+            return `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <div style="
+                        width: ${width}px;
+                        height: ${height}px;
+                        background: ${bgColor};
+                        border-radius: 4px;
+                        overflow: hidden;
+                        position: relative;
+                    ">
+                        <div style="
+                            width: ${displayPercent}%;
+                            height: 100%;
+                            background: ${color};
+                            border-radius: 4px;
+                            transition: width 0.3s ease;
+                        "></div>
+                    </div>
+                    <span style="
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: ${percentValue > 100 ? '#1a2738' : color};
+                        min-width: 38px;
+                    ">${percentValue.toFixed(1)}%</span>
+                </div>
+            `;
+        }
+
+        // 生成环形图+百分比HTML - 环形图在左，百分比在右
+        function getPercentChartHtml(percent, size = 40) {
+            const percentValue = parseFloat(percent) || 0;
+            const displayPercent = Math.min(percentValue, 100);
+            const color = getPieColor(percentValue);
+            const bgColor = '#e1e8f0';
+            const radius = size / 2;
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const innerRadius = size * 0.3;
+
+            // 绘制进度环
+            let pathData = '';
+            if (displayPercent > 0) {
+                const angle = (displayPercent / 100) * 360;
+                const startAngle = -90;
+                const endAngle = startAngle + angle;
+                const startRad = (startAngle * Math.PI) / 180;
+                const endRad = (endAngle * Math.PI) / 180;
+
+                if (displayPercent >= 100) {
+                    pathData = `M ${centerX - radius},${centerY}
+                               a ${radius},${radius} 0 1,0 ${radius * 2},0
+                               a ${radius},${radius} 0 1,0 ${-radius * 2},0`;
+                } else {
+                    const x1 = centerX + radius * Math.cos(startRad);
+                    const y1 = centerY + radius * Math.sin(startRad);
+                    const x2 = centerX + radius * Math.cos(endRad);
+                    const y2 = centerY + radius * Math.sin(endRad);
+                    const largeArcFlag = angle > 180 ? 1 : 0;
+                    const strokeWidth = radius - innerRadius;
+                    const midRadius = innerRadius + strokeWidth / 2;
+
+                    const mx1 = centerX + midRadius * Math.cos(startRad);
+                    const my1 = centerY + midRadius * Math.sin(startRad);
+                    const mx2 = centerX + midRadius * Math.cos(endRad);
+                    const my2 = centerY + midRadius * Math.sin(endRad);
+
+                    pathData = `M ${mx1},${my1}
+                               A ${midRadius},${midRadius} 0 ${largeArcFlag},1 ${mx2},${my2}`;
+                }
+            }
+
+            const fontSize = percentValue > 99 ? 8 : 10;
+            const strokeWidth = radius - innerRadius;
+            const midRadius = innerRadius + strokeWidth / 2;
+
+            let svgPath = '';
+            if (pathData) {
+                svgPath = `<path d="${pathData}" fill="none" stroke="${color}" stroke-width="${strokeWidth}"/>`;
+            }
+
+            const svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="${bgColor}"/>
+                ${svgPath}
+                <circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="#ffffff"/>
+                <text x="${centerX}" y="${centerY}"
+                      text-anchor="middle"
+                      dominant-baseline="central"
+                      font-size="${fontSize}"
+                      font-weight="700"
+                      fill="${color}">${Math.round(displayPercent)}%</text>
+            </svg>`;
+
+            return svg;
+        }
+
+        // 生成环形图+百分比的组合HTML（左右排列）
+        function getPercentChartWithTextHtml(percent, labelText = '') {
+            const chartHtml = getPercentChartHtml(percent, 36);
+            const percentValue = parseFloat(percent) || 0;
+            const color = getPieColor(percentValue);
+
+            return `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    ${chartHtml}
+                    <span style="font-size: 13px; font-weight: 600; color: ${color}; min-width: 35px;">${Math.round(percentValue)}%</span>
+                </div>
+            `;
+        }
+
+        // 生成数字环形图HTML - 用于产品销售额和总计列
+        function getNumberChartHtml(value, maxValue, size = 48) {
+            const percent = maxValue > 0 ? Math.min((value / maxValue) * 100, 100) : 0;
+            const bgColor = '#e1e8f0';
+            const color = '#1e3a5f'; // 数字环形图用深蓝色
+            const radius = size / 2;
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const innerRadius = size * 0.28;
+
+            // 绘制进度环
+            let pathData = '';
+            if (percent > 0) {
+                const angle = (percent / 100) * 360;
+                const startAngle = -90;
+                const endAngle = startAngle + angle;
+                const startRad = (startAngle * Math.PI) / 180;
+                const endRad = (endAngle * Math.PI) / 180;
+
+                if (percent >= 100) {
+                    // 完整圆环
+                    pathData = `M ${centerX - radius},${centerY}
+                               a ${radius},${radius} 0 1,0 ${radius * 2},0
+                               a ${radius},${radius} 0 1,0 ${-radius * 2},0`;
+                } else {
+                    const x1 = centerX + radius * Math.cos(startRad);
+                    const y1 = centerY + radius * Math.sin(startRad);
+                    const x2 = centerX + radius * Math.cos(endRad);
+                    const y2 = centerY + radius * Math.sin(endRad);
+                    const largeArcFlag = angle > 180 ? 1 : 0;
+
+                    pathData = `M ${x1},${y1}
+                               A ${radius},${radius} 0 ${largeArcFlag},1 ${x2},${y2}`;
+                }
+            }
+
+            // 根据数字长度调整字体大小
+            const numStr = value.toString();
+            let fontSize = 14;
+            if (numStr.length > 2) fontSize = 12;
+            if (numStr.length > 3) fontSize = 10;
+
+            const svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="${bgColor}"/>
+                ${pathData ? `<path d="${pathData}" fill="none" stroke="${color}" stroke-width="${radius - innerRadius}"/>` : ''}
+                <circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="#ffffff"/>
+                <text x="${centerX}" y="${centerY}"
+                      text-anchor="middle"
+                      dominant-baseline="central"
+                      font-size="${fontSize}"
+                      font-weight="700"
+                      fill="${color}">${value}</text>
+            </svg>`;
+
+            return svg;
+        }
+
+        function calculateRowTotal(data, region, products) {
+            return products.reduce((sum, product) => sum + (data[region]?.[product] || 0), 0);
+        }
+
+        function calculateProductTotal(data, regions, product) {
+            return regions.reduce((sum, region) => sum + (data[region]?.[product] || 0), 0);
+        }
+
+        // 渲染指标维护面板（表格形式）
+        function renderMetricsPanel(type) {
+            const container = document.getElementById(type + '-metrics-container');
+            const regions = type === 'direct' ? directRegions : investmentRegions;
+            const lastYearData = type === 'direct' ? directLastYear : investmentLastYear;
+            const monthLabel = selectedMonth + '月指标';
+            const dSegLabel = selectedDSeg + '指标';
+            const monthlySales = type === 'direct' ? directMonthlySales : investmentMonthlySales;
+
+            if (regions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-text">暂无省区数据，请添加省区</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 招商业务部：显示1-12月销售额输入表格
+            if (type === 'investment') {
+                renderInvestmentMetricsPanel(container, regions, monthlySales);
+                return;
+            }
+
+            // 自营业务部：原有逻辑
+            // 只有偶数月才需要显示上月销售额列
+            const showPrevMonth = selectedMonth % 2 === 0;
+            const prevMonth = selectedMonth - 1;
+
+            let html = `
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead>
+                        <tr style="background: #d5e4f5;">
+                            <th style="padding: 8px 12px; text-align: left; border: 1px solid #c5d5e0; color: #1e3a5f;">省区</th>
+                            ${showPrevMonth ? `<th style="padding: 8px 12px; text-align: center; border: 1px solid #c5d5e0; color: #1e3a5f;">${prevMonth}月销售额</th>` : ''}
+                            <th style="padding: 8px 12px; text-align: center; border: 1px solid #c5d5e0; color: #1e3a5f;">${monthLabel}</th>
+                            <th style="padding: 8px 12px; text-align: center; border: 1px solid #c5d5e0; color: #1e3a5f;">${dSegLabel}</th>
+                            <th style="padding: 8px 12px; text-align: center; border: 1px solid #c5d5e0; color: #1e3a5f;">${selectedDSeg}累计</th>
+                            <th style="padding: 8px 12px; text-align: center; border: 1px solid #c5d5e0; color: #1e3a5f;">25年均值</th>
+                            <th style="padding: 8px 12px; text-align: center; border: 1px solid #c5d5e0; color: #1e3a5f;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            regions.forEach(region => {
+                const targetValue = getCurrentTarget(type, region);
+                const dTargetValue = getCurrentDTarget(type, region);
+                const dSales = getCurrentDSales(type, region);
+                const prevMonthSales = showPrevMonth ? (monthlySales[prevMonth]?.[region] || 0) : 0;
+
+                html += `
+                    <tr style="background: ${regions.indexOf(region) % 2 === 0 ? '#ffffff' : '#f8fafc'}">
+                        <td style="padding: 8px 12px; border: 1px solid #e1e8f0; font-weight: 600; color: #1e3a5f;">${region}</td>
+                        ${showPrevMonth ? `
+                            <td style="padding: 6px; border: 1px solid #e1e8f0; text-align: center;">
+                                <input type="number"
+                                       style="width: 70px; padding: 4px 8px; border: 1px solid #e1e8f0; border-radius: 4px; font-size: 13px; text-align: center; font-weight: 600; color: #2d9a6e;"
+                                       value="${prevMonthSales.toFixed(1)}"
+                                       oninput="updatePrevMonthSales('${type}', '${region}', this.value)">
+                            </td>
+                        ` : ''}
+                        <td style="padding: 6px; border: 1px solid #e1e8f0; text-align: center;">
+                            <input type="number" class="metric-input"
+                                   style="width: 70px; padding: 4px 8px;"
+                                   value="${targetValue}"
+                                   oninput="updateRegionTarget('${type}', '${region}', 'target', this.value)">
+                        </td>
+                        <td style="padding: 6px; border: 1px solid #e1e8f0; text-align: center;">
+                            <input type="number" class="metric-input"
+                                   style="width: 70px; padding: 4px 8px;"
+                                   value="${dTargetValue}"
+                                   oninput="updateRegionTarget('${type}', '${region}', 'dTarget', this.value)">
+                        </td>
+                        <td style="padding: 8px 12px; border: 1px solid #e1e8f0; text-align: center; background: #f0f7ff; font-weight: 600; color: #1e3a5f;" id="d-sales-${type}-${region}">${dSales.toFixed(1)}</td>
+                        <td style="padding: 6px; border: 1px solid #e1e8f0; text-align: center;">
+                            <input type="number" class="metric-input"
+                                   style="width: 70px; padding: 4px 8px;"
+                                   value="${lastYearData[region] || 0}"
+                                   oninput="updateRegionTarget('${type}', '${region}', 'lastYear', this.value)">
+                        </td>
+                        <td style="padding: 8px 12px; border: 1px solid #e1e8f0; text-align: center;">
+                            <button class="btn btn-danger" onclick="removeRegion('${type}', '${region}')" style="padding: 4px 8px; font-size: 12px;">删除</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // 渲染招商业务部指标维护面板（1-12月销售额输入）
+        function renderInvestmentMetricsPanel(container, regions, monthlySales) {
+            let html = `
+                <div style="margin-bottom: 10px; color: #666; font-size: 13px;">
+                    💡 输入各省区1-${selectedMonth}月的销售额数据
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background: #d5e4f5; position: sticky; top: 0;">
+                            <th style="padding: 8px 12px; text-align: left; border: 1px solid #c5d5e0; color: #1e3a5f; min-width: 80px;">省区</th>
+                            ${Array.from({length: 12}, (_, i) => {
+                                const month = i + 1;
+                                const isEditable = month <= selectedMonth;
+                                return `
+                                    <th style="padding: 6px 4px; text-align: center; border: 1px solid #c5d5e0; color: ${isEditable ? '#1e3a5f' : '#999'}; min-width: 55px;">${month}月</th>
+                                `;
+                            }).join('')}
+                            <th style="padding: 8px 12px; text-align: center; border: 1px solid #c5d5e0; color: #1e3a5f; min-width: 70px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            regions.forEach((region, regionIdx) => {
+                html += `
+                    <tr style="background: ${regionIdx % 2 === 0 ? '#ffffff' : '#f8fafc'}">
+                        <td style="padding: 8px 12px; border: 1px solid #e1e8f0; font-weight: 600; color: #1e3a5f;">${region}</td>
+                        ${Array.from({length: 12}, (_, i) => {
+                            const month = i + 1;
+                            const value = monthlySales[month]?.[region] || 0;
+                            const isCurrentMonth = month === selectedMonth;
+                            const isFutureMonth = month > selectedMonth; // 当前月之后的月份
+                            return `
+                                <td style="padding: 4px; border: 1px solid #e1e8f0; text-align: center;">
+                                    <input type="number"
+                                           style="width: 100%; padding: 4px 6px; border: ${isCurrentMonth && !isFutureMonth ? '2px solid #c9a227' : '1px solid #e1e8f0'}; border-radius: 4px; font-size: 12px; text-align: center; ${isCurrentMonth && !isFutureMonth ? 'background: #fffaf0; font-weight: 600;' : ''} ${isFutureMonth ? 'background: #f5f5f5; color: #999; cursor: not-allowed;' : ''}"
+                                           value="${isFutureMonth ? 0 : value.toFixed(1)}"
+                                           ${isFutureMonth ? 'disabled' : ''}
+                                           ${!isFutureMonth ? `oninput="updateInvestmentMonthSales('${region}', ${month}, this.value)"` : ''}>
+                                </td>
+                            `;
+                        }).join('')}
+                        <td style="padding: 8px 12px; border: 1px solid #e1e8f0; text-align: center;">
+                            <button class="btn btn-danger" onclick="removeRegion('investment', '${region}')" style="padding: 4px 8px; font-size: 11px;">删除</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // 更新招商业务部月度销售额
+        function updateInvestmentMonthSales(region, month, value) {
+            // 当前月之后的月份不允许修改
+            if (month > selectedMonth) {
+                return;
+            }
+            if (!investmentMonthlySales[month]) investmentMonthlySales[month] = {};
+            investmentMonthlySales[month][region] = parseFloat(value) || 0;
+            saveData();
+            renderInvestmentTable();
+
+            // 如果产品明细面板是打开的，实时更新对应单元格
+            const productContent = document.getElementById('investment-product-content');
+            if (productContent && productContent.style.display !== 'none') {
+                // 重新渲染产品明细表格以显示最新数据
+                renderInvestmentProductTable();
+            }
+        }
+
+        // 更新产品明细表格中的月度累计销售额输入框值
+        function updateProductMonthlySalesInput(region, value) {
+            const tbody = document.getElementById('investment-product-tbody');
+            if (!tbody) return;
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const regionCell = row.querySelector('td:first-child strong');
+                if (regionCell && regionCell.textContent === region) {
+                    // 找到对应的行，更新累计销售额输入框（第7列，索引6）
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length > 6) {
+                        const inputCell = cells[6];
+                        const input = inputCell.querySelector('input');
+                        if (input) {
+                            input.value = parseFloat(value).toFixed(1);
+                        }
+                    }
+                }
+            });
+        }
+
+        // 更新指标维护面板中的月度销售额输入框值
+        function updateMetricsPanelMonthSalesInput(region, month, value) {
+            const container = document.getElementById('investment-metrics-container');
+            if (!container) return;
+            const table = container.querySelector('table');
+            if (!table) return;
+
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const regionCell = row.querySelector('td:first-child');
+                if (regionCell && regionCell.textContent.trim() === region) {
+                    // 找到对应的行，更新指定月份的输入框
+                    const cells = row.querySelectorAll('td');
+                    // 跳过第一列（省区名），月份从第2列开始
+                    const monthIndex = month; // 1月 = 第2列 = 索引1
+                    if (cells.length > monthIndex) {
+                        const inputCell = cells[monthIndex];
+                        const input = inputCell.querySelector('input');
+                        if (input) {
+                            input.value = parseFloat(value).toFixed(1);
+                        }
+                    }
+                }
+            });
+        }
+
+        // 更新D段累计显示（只更新对应单元格，不重新渲染整个表格）
+        function updateDSalesDisplay(type) {
+            const regions = type === 'direct' ? directRegions : investmentRegions;
+            regions.forEach(region => {
+                const dSales = getCurrentDSales(type, region);
+                const cell = document.getElementById(`d-sales-${type}-${region}`);
+                if (cell) {
+                    cell.textContent = dSales.toFixed(1);
+                }
+            });
+        }
+
+        // 更新上月销售额总额
+        function updatePrevMonthSales(type, region, value) {
+            const prevMonth = selectedMonth - 1;
+            const monthlySales = type === 'direct' ? directMonthlySales : investmentMonthlySales;
+
+            if (!monthlySales[prevMonth]) monthlySales[prevMonth] = {};
+            monthlySales[prevMonth][region] = parseFloat(value) || 0;
+
+            updateDSalesDisplay(type);
+            renderTable(type);
+            saveData();
+        }
+
+        // 更新区域指标
+        function updateRegionTarget(type, region, targetKey, value) {
+            const numValue = parseFloat(value) || 0;
+            if (targetKey === 'target') {
+                setCurrentTarget(type, region, numValue);
+            } else if (targetKey === 'dTarget') {
+                setCurrentDTarget(type, region, numValue);
+            } else if (targetKey === 'lastYear') {
+                if (type === 'direct') {
+                    directLastYear[region] = numValue;
+                } else {
+                    investmentLastYear[region] = numValue;
+                }
+            }
+            renderTable(type);
+            saveData(); // 保存数据
+        }
+
+        // 添加区域
+        function addRegion(type) {
+            const regionName = prompt('请输入新省区名称：');
+            if (!regionName || !regionName.trim()) return;
+
+            const regions = type === 'direct' ? directRegions : investmentRegions;
+            const region = regionName.trim();
+
+            if (regions.includes(region)) {
+                alert('该区域已存在！');
+                return;
+            }
+
+            regions.push(region);
+
+            if (type === 'direct') {
+                directData[region] = {};
+                DIRECT_PRODUCTS.forEach(p => directData[region][p] = 0);
+                directLastYear[region] = 0;
+                // 初始化所有月份的指标
+                for (let m = 1; m <= 12; m++) {
+                    if (!directTarget[m]) directTarget[m] = {};
+                    directTarget[m][region] = 100;
+                }
+                // 初始化所有D段的指标
+                ['D1', 'D2', 'D3', 'D4', 'D5', 'D6'].forEach(d => {
+                    if (!directDTarget[d]) directDTarget[d] = {};
+                    directDTarget[d][region] = 50;
+                });
+            } else {
+                investmentData[region] = {};
+                INVESTMENT_PRODUCTS.forEach(p => investmentData[region][p] = 0);
+                investmentLastYear[region] = 0;
+                // 初始化所有月份的指标
+                for (let m = 1; m <= 12; m++) {
+                    if (!investmentTarget[m]) investmentTarget[m] = {};
+                    investmentTarget[m][region] = 80;
+                }
+                // 初始化所有C段的指标（招商业务部使用C段）
+                ['C1', 'C2', 'C3'].forEach(c => {
+                    if (!investmentDTarget[c]) investmentDTarget[c] = {};
+                    investmentDTarget[c][region] = 40;
+                });
+            }
+
+            renderMetricsPanel(type);
+            renderTable(type);
+            saveData(); // 保存数据
+        }
+
+        // 删除区域
+        function removeRegion(type, region) {
+            if (!confirm(`确定要删除「${region}」吗？`)) return;
+
+            const regions = type === 'direct' ? directRegions : investmentRegions;
+            const idx = regions.indexOf(region);
+            if (idx > -1) regions.splice(idx, 1);
+
+            if (type === 'direct') {
+                delete directData[region];
+                delete directLastYear[region];
+                // 删除所有月份的指标
+                for (let m = 1; m <= 12; m++) {
+                    if (directTarget[m]) delete directTarget[m][region];
+                }
+                // 删除所有D段的指标
+                ['D1', 'D2', 'D3', 'D4', 'D5', 'D6'].forEach(d => {
+                    if (directDTarget[d]) delete directDTarget[d][region];
+                });
+            } else {
+                delete investmentData[region];
+                delete investmentLastYear[region];
+                for (let m = 1; m <= 12; m++) {
+                    if (investmentTarget[m]) delete investmentTarget[m][region];
+                }
+                // 删除所有C段的指标（招商业务部使用C段）
+                ['C1', 'C2', 'C3'].forEach(c => {
+                    if (investmentDTarget[c]) delete investmentDTarget[c][region];
+                });
+            }
+
+            renderMetricsPanel(type);
+            renderTable(type);
+            saveData(); // 保存数据
+        }
+
+        // Excel上传处理
+        function triggerExcelUpload(type) {
+            document.getElementById(`excel-upload-${type}`).click();
+        }
+
+        function handleExcelUpload(type, input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    // 解析Excel数据
+                    const regions = type === 'direct' ? directRegions : investmentRegions;
+                    const products = type === 'direct' ? DIRECT_PRODUCTS : INVESTMENT_PRODUCTS;
+                    const dataObj = type === 'direct' ? directData : investmentData;
+                    const monthlySales = type === 'direct' ? directMonthlySales : investmentMonthlySales;
+
+                    // 查找省区列
+                    const regionCol = Object.keys(jsonData[0]).find(k => jsonData[0][k] && regions.includes(jsonData[0][k].trim()));
+
+                    if (!regionCol) {
+                        alert('Excel中未找到省区列！请确保第一列是省区名称。');
+                        return;
+                    }
+
+                    // 逐行处理
+                    jsonData.forEach(row => {
+                        const region = row[regionCol]?.trim();
+                        if (!region || !regions.includes(region)) {
+                            console.log('跳过未知省区:', region);
+                            return;
+                        }
+
+                        // 初始化省区数据
+                        if (!dataObj[region]) dataObj[region] = {};
+                        products.forEach(p => dataObj[region][p] = 0);
+
+                        // 查找产品列并填入数据
+                        let monthTotal = 0;
+                        products.forEach(product => {
+                            const colKey = Object.keys(row).find(k => k.trim() === product);
+                            if (colKey) {
+                                const val = parseFloat(row[colKey]) || 0;
+                                dataObj[region][product] = val;
+                                monthTotal += val;
+                            }
+                        });
+
+                        // 更新月度总计
+                        if (!monthlySales[selectedMonth]) monthlySales[selectedMonth] = {};
+                        monthlySales[selectedMonth][region] = monthTotal;
+                    });
+
+                    alert('Excel导入成功！');
+                    renderTable(type);
+                    saveData();
+
+                } catch (err) {
+                    alert('Excel解析失败：' + err.message);
+                }
+                input.value = ''; // 清空input，允许重复上传
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 统一的表格渲染函数
+        function renderTable(type) {
+            if (type === 'direct') {
+                renderDirectTable();
+            } else {
+                renderInvestmentTable();
+            }
+        }
+
+        function renderDirectTable() {
+            const tbody = document.getElementById('direct-tbody');
+            const tfoot = document.getElementById('direct-tfoot');
+            let tbodyHtml = '';
+            let grandTotal = 0;
+            let grandLastYear = 0;
+            let grandTarget = 0;
+            let grandDTarget = 0;
+            let grandDSales = 0;
+
+            // 收集所有区域数据并按月累计进度降序排序
+            const regionDataList = [];
+            directRegions.forEach(region => {
+                const rowTotal = calculateRowTotal(directData, region, DIRECT_PRODUCTS);
+                const target = getCurrentTarget('direct', region);
+                const lastYear = directLastYear[region] || 0;
+                const growth = rowTotal - lastYear; // 增长额 = 总计 - 25年均值
+                const dTarget = getCurrentDTarget('direct', region);
+                const dSales = getCurrentDSales('direct', region);
+                const percent = target > 0 ? ((rowTotal / target) * 100) : 0;
+                const dPercent = dTarget > 0 ? ((dSales / dTarget) * 100) : 0;
+
+                grandTotal += rowTotal;
+                grandLastYear += lastYear;
+                grandTarget += target;
+                grandDTarget += dTarget;
+                grandDSales += dSales;
+
+                regionDataList.push({
+                    region,
+                    rowTotal,
+                    target,
+                    lastYear,
+                    growth,
+                    dTarget,
+                    percent,
+                    dPercent
+                });
+            });
+
+            // 按percent降序排序
+            regionDataList.sort((a, b) => b.percent - a.percent);
+
+            // 渲染排序后的行
+            regionDataList.forEach(data => {
+                tbodyHtml += `<tr><td>${data.region}</td>`;
+                DIRECT_PRODUCTS.forEach(p => {
+                    tbodyHtml += `<td><input type="number" class="cell-input" value="${directData[data.region]?.[p] || 0}"
+                        oninput="updateDirectData('${data.region}', '${p}', this.value)"></td>`;
+                });
+                tbodyHtml += `<td><strong>${data.rowTotal}</strong></td>`;
+                tbodyHtml += `<td>${getPieChartHtml(data.percent)}</td>`;
+                tbodyHtml += `<td>${getPieChartHtml(data.dPercent)}</td>`;
+                tbodyHtml += `<td>${getGrowthBarHtml(data.growth, grandLastYear)}</td>`;
+                tbodyHtml += '</tr>';
+            });
+
+            tbody.innerHTML = tbodyHtml;
+
+            // 合计行
+            const totalPercent = grandTarget > 0 ? ((grandTotal / grandTarget) * 100).toFixed(1) : '0.0';
+            const totalDPercent = grandDTarget > 0 ? ((grandDSales / grandDTarget) * 100).toFixed(1) : '0.0';
+            const totalGrowth = grandTotal - grandLastYear; // 总增长额 = 总计 - 25年均值
+
+            let tfootHtml = '<tr><td>自营业务部</td>';
+            DIRECT_PRODUCTS.forEach(p => {
+                tfootHtml += `<td>${calculateProductTotal(directData, directRegions, p)}</td>`;
+            });
+            tfootHtml += `<td>${grandTotal}</td>`;
+            tfootHtml += `<td>${getPieChartHtml(totalPercent)}</td>`;
+            tfootHtml += `<td>${getPieChartHtml(totalDPercent)}</td>`;
+            tfootHtml += `<td>${getGrowthBarHtml(totalGrowth, grandLastYear)}</td>`;
+            tfootHtml += '</tr>';
+            tfoot.innerHTML = tfootHtml;
+        }
+
+        // 获取增长额数据条HTML（自营业务部：vs25均值增长额）
+        function getGrowthBarHtml(growth, grandLastYear = 100) {
+            const growthValue = growth || 0;
+            const absGrowth = Math.abs(growthValue);
+            const isPositive = growthValue >= 0;
+            const color = isPositive ? '#2d9a6e' : '#c9453b'; // 正增长绿色，负增长红色
+
+            // 计算数据条宽度（基于25年均值的百分比，最大200%）
+            const maxGrowth = Math.max(grandLastYear * 2, 100); // 动态计算最大值
+            const barWidth = Math.min((absGrowth / maxGrowth) * 100, 100);
+
+            return `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                    <span style="color: ${color}; font-weight: 600;">${isPositive ? '+' : ''}${growthValue.toFixed(1)}</span>
+                    <div style="width: 60px; height: 8px; background: #e5ebf0; border-radius: 4px; position: relative;">
+                        <div style="width: ${Math.min(barWidth, 100)}%; height: 100%; background: ${color}; border-radius: 4px;"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 获取招商业务部25年均值显示（仅数字）
+        function renderInvestmentTable() {
+            const tbody = document.getElementById('investment-tbody');
+            const tfoot = document.getElementById('investment-tfoot');
+            let tbodyHtml = '';
+            let grandTotal = 0;
+            let grandTarget = 0;
+            let grandDTarget = 0;
+            let grandDSales = 0;
+
+            // 收集所有区域数据并按月累计进度降序排序
+            const regionDataList = [];
+            investmentRegions.forEach(region => {
+                // 使用用户输入的月度累计销售额，而不是计算产品明细总和
+                const rowTotal = investmentMonthlySales[selectedMonth]?.[region] || 0;
+                const target = getCurrentTarget('investment', region);
+                const dTarget = getCurrentDTarget('investment', region);
+                const dSales = getCurrentDSales('investment', region);
+                const percent = target > 0 ? ((rowTotal / target) * 100) : 0;
+                const dPercent = dTarget > 0 ? ((dSales / dTarget) * 100) : 0;
+
+                grandTotal += rowTotal;
+                grandTarget += target;
+                grandDTarget += dTarget;
+                grandDSales += dSales;
+
+                regionDataList.push({
+                    region,
+                    rowTotal,
+                    target,
+                    dTarget,
+                    dSales,
+                    percent,
+                    dPercent
+                });
+            });
+
+            // 按percent降序排序
+            regionDataList.sort((a, b) => b.percent - a.percent);
+
+            // 渲染排序后的行
+            regionDataList.forEach(data => {
+                tbodyHtml += `<tr>
+                    <td>${data.region}</td>
+                    <td><input type="number" class="cell-input" value="${data.target}"
+                        onchange="updateRegionTarget('investment', '${data.region}', 'target', this.value)"></td>
+                    <td><strong>${data.rowTotal.toFixed(1)}</strong></td>
+                    <td>${getProgressBarHtml(data.percent)}</td>
+                    <td><input type="number" class="cell-input" value="${data.dTarget.toFixed(1)}"
+                        onchange="updateRegionTarget('investment', '${data.region}', 'dTarget', this.value)"></td>
+                    <td>${data.dSales.toFixed(1)}</td>
+                    <td>${getProgressBarHtml(data.dPercent)}</td>
+                </tr>`;
+            });
+
+            tbody.innerHTML = tbodyHtml;
+
+            // 合计行
+            const totalPercent = grandTarget > 0 ? ((grandTotal / grandTarget) * 100) : 0;
+            const totalDPercent = grandDTarget > 0 ? ((grandDSales / grandDTarget) * 100) : 0;
+
+            let tfootHtml = `<tr>
+                <td>招商业务部</td>
+                <td>${grandTarget.toFixed(1)}</td>
+                <td>${grandTotal.toFixed(1)}</td>
+                <td>${getProgressBarHtml(totalPercent)}</td>
+                <td>${grandDTarget.toFixed(1)}</td>
+                <td>${grandDSales.toFixed(1)}</td>
+                <td>${getProgressBarHtml(totalDPercent)}</td>
+            </tr>`;
+
+            tfoot.innerHTML = tfootHtml;
+        }
+
+        function updateDirectData(region, product, value) {
+            if (!directData[region]) directData[region] = {};
+            directData[region][product] = parseFloat(value) || 0;
+            // 更新月度总计
+            directMonthlySales[selectedMonth][region] = calculateRowTotal(directData, region, DIRECT_PRODUCTS);
+            updateDSalesDisplay('direct');
+            renderDirectTable();
+            saveData(); // 保存数据
+        }
+
+        function updateInvestmentData(region, product, value) {
+            if (!investmentData[region]) investmentData[region] = {};
+            investmentData[region][product] = parseFloat(value) || 0;
+            // 更新产品明细表格的合计列（不重新渲染整个表格）
+            updateProductDetailTotal(region);
+            updateDSalesDisplay('investment');
+            renderInvestmentTable();
+            saveData(); // 保存数据
+        }
+
+        // 更新产品明细表格中指定区域的合计列
+        function updateProductDetailTotal(region) {
+            const tbody = document.getElementById('investment-product-tbody');
+            if (!tbody) return;
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach((row, index) => {
+                const regionCell = row.querySelector('td:first-child strong');
+                if (regionCell && regionCell.textContent === region) {
+                    // 找到对应的行，更新合计列（第5列，索引4）
+                    const totalCell = row.querySelectorAll('td')[4];
+                    if (totalCell) {
+                        const newTotal = calculateRowTotal(investmentData, region, INVESTMENT_PRODUCTS);
+                        totalCell.innerHTML = `<strong>${newTotal.toFixed(1)}</strong>`;
+                    }
+                }
+            });
+        }
+
+        function exportToPNG() {
+            const isDirect = document.getElementById('direct-tab').classList.contains('active');
+            const type = isDirect ? 'direct' : 'investment';
+            const tabName = isDirect ? '自营业务部' : '招商业务部';
+            const monthText = selectedMonth + '月';
+            const dSegText = selectedDSeg;
+            const products = isDirect ? DIRECT_PRODUCTS : INVESTMENT_PRODUCTS;
+            const regions = isDirect ? directRegions : investmentRegions;
+            const data = isDirect ? directData : investmentData;
+
+            // 增加高度以给环形图更多空间
+            const canvasWidth = 1920;
+            const canvasHeight = 1280;
+            const padding = 70;
+            const titleHeight = 100;
+            const headerHeight = 80;
+            const footerHeight = 90;
+
+            // 计算列宽 - 自营业务部的增长额列需要更宽
+            const tableWidth = canvasWidth - padding * 2;
+            let colWidth;
+            let growthColWidth;
+
+            if (isDirect) {
+                // 自营业务部：9列，但增长额列占用1.8倍宽度
+                // 标准列数 = 8 (省区+4产品+总计+2进度)
+                // 增长额列 = 1.8倍宽度
+                const normalColCount = 8;
+                const growthColMultiplier = 1.8;
+                colWidth = tableWidth / (normalColCount + growthColMultiplier);
+                growthColWidth = colWidth * growthColMultiplier;
+            } else {
+                // 招商业务部：7列等宽
+                const numCols = 7;
+                colWidth = tableWidth / numCols;
+                growthColWidth = colWidth;
+            }
+
+            // 自营业务部需要25年均值数据，招商业务部不需要
+            const lastYearData = isDirect ? directLastYear : null;
+
+            // 收集表格数据并排序
+            const regionDataList = [];
+            regions.forEach(region => {
+                // 招商业务部使用用户输入的月度累计销售额，自营业务部使用产品明细计算
+                const rowTotal = isDirect
+                    ? calculateRowTotal(data, region, products)
+                    : (investmentMonthlySales[selectedMonth]?.[region] || 0);
+                const target = getCurrentTarget(type, region);
+                const lastYear = isDirect ? (lastYearData?.[region] || 0) : 0;
+                const dTarget = getCurrentDTarget(type, region);
+                const dSales = getCurrentDSales(type, region);
+                const percent = target > 0 ? ((rowTotal / target) * 100) : 0;
+                const dPercent = dTarget > 0 ? ((dSales / dTarget) * 100) : 0;
+                // 计算增长额（仅自营业务部需要）
+                const growth = isDirect ? (rowTotal - lastYear) : 0;
+
+                regionDataList.push({
+                    region,
+                    values: products.map(p => data[region]?.[p] || 0),
+                    rowTotal,
+                    target,
+                    lastYear,
+                    growth,
+                    dTarget,
+                    dSales,
+                    percent,
+                    dPercent
+                });
+            });
+            regionDataList.sort((a, b) => b.percent - a.percent);
+
+            // 计算各部分尺寸（基于canvas大小和数据行数）
+            const availableHeight = canvasHeight - titleHeight - padding * 2 - footerHeight;
+            const headerRowsCount = isDirect ? 2 : 1;
+            const dataHeight = availableHeight - headerHeight * headerRowsCount;
+            const rowCount = regionDataList.length + 1; // +1 for footer
+            const rowHeight = dataHeight / rowCount;
+
+            // 计算合计行
+            const grandTotal = isDirect
+                ? regions.reduce((sum, r) => sum + calculateRowTotal(data, r, products), 0)
+                : regions.reduce((sum, r) => sum + (investmentMonthlySales[selectedMonth]?.[r] || 0), 0);
+            const grandTarget = regions.reduce((sum, r) => sum + getCurrentTarget(type, r), 0);
+            const grandDTarget = regions.reduce((sum, r) => sum + getCurrentDTarget(type, r), 0);
+            const grandDSales = regions.reduce((sum, r) => sum + getCurrentDSales(type, r), 0);
+            const grandLastYear = isDirect ? regions.reduce((sum, r) => sum + (lastYearData?.[r] || 0), 0) : 0;
+            const totalPercent = grandTarget > 0 ? ((grandTotal / grandTarget) * 100) : 0;
+            const totalDPercent = grandDTarget > 0 ? ((grandDSales / grandDTarget) * 100) : 0;
+
+            // 创建canvas - 16:9 比例，高分辨率
+            const canvas = document.createElement('canvas');
+            const scale = 2; // 2倍分辨率
+            canvas.width = canvasWidth * scale;
+            canvas.height = canvasHeight * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(scale, scale);
+
+            // 绘制背景
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            let y = padding;
+
+            // 绘制标题 - 增大字体以适应16:9画布
+            ctx.fillStyle = '#1e3a5f';
+            ctx.font = 'bold 38px "Noto Sans SC", "Microsoft YaHei", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(`${tabName}销售进度公示`, canvasWidth / 2, y);
+
+            // 绘制下划线
+            ctx.strokeStyle = '#c9a227';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(canvasWidth * 0.2, y + 50);
+            ctx.lineTo(canvasWidth * 0.8, y + 50);
+            ctx.stroke();
+
+            y += titleHeight;
+
+            // 获取颜色的辅助函数
+            function getColor(percent) {
+                if (percent > 100) return '#1e7e44';
+                if (percent >= 50) return '#2d9a6e';
+                if (percent >= 20) return '#d9a634';
+                return '#c9453b';
+            }
+
+            // 绘制单元格 - 优化版本
+            function drawCell(x, y, w, h, text, bgColor = '#f0f6fc', textColor = '#1e3a5f', fontSize = 18, bold = false) {
+                // 背景
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(x, y, w, h);
+
+                // 边框 - 更清晰的线条
+                ctx.strokeStyle = '#c5d5e0';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(x, y, w, h);
+
+                if (text) {
+                    ctx.fillStyle = textColor;
+                    const fontWeight = bold ? 'bold' : 'normal';
+                    ctx.font = `${fontWeight} ${fontSize}px "Noto Sans SC", "Microsoft YaHei", sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    const lines = text.split('\n');
+                    if (lines.length === 1) {
+                        ctx.fillText(text, x + w / 2, y + h / 2);
+                    } else {
+                        const lineHeight = fontSize * 1.2;
+                        const totalHeight = (lines.length - 1) * lineHeight;
+                        lines.forEach((line, i) => {
+                            ctx.fillText(line, x + w / 2, y + h / 2 - totalHeight / 2 + i * lineHeight);
+                        });
+                    }
+                }
+            }
+
+            // 绘制环形饼图 - 优化版本
+            function drawPieChart(centerX, centerY, radius, percent) {
+                const color = getColor(percent);
+                const innerR = radius * 0.5;
+                const displayPercent = Math.min(percent, 100);
+                const angle = (displayPercent / 100) * Math.PI * 2;
+
+                // 背景圆环
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.arc(centerX, centerY, innerR, 0, Math.PI * 2, true);
+                ctx.fillStyle = '#e5ebf0';
+                ctx.fill();
+
+                // 进度扇形
+                if (displayPercent > 0) {
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + angle);
+                    ctx.arc(centerX, centerY, innerR, -Math.PI / 2 + angle, -Math.PI / 2, true);
+                    ctx.closePath();
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                }
+
+                // 百分比文字 - 增大字体以适应更大的环形图
+                const fontSize = 24; // 增大字体
+                const textColor = percent > 100 ? '#000000' : color;
+                ctx.fillStyle = textColor;
+                ctx.font = `bold ${fontSize}px "Noto Sans SC", "Microsoft YaHei", sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(Math.round(percent) + '%', centerX, centerY);
+            }
+
+            // 圆角矩形辅助函数
+            function roundRect(ctx, x, y, w, h, r) {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w - r, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                ctx.lineTo(x + w, y + h - r);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                ctx.lineTo(x + r, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+                ctx.closePath();
+            }
+
+            // 绘制增长条 - 优化布局，数字左对齐，进度条适中
+            function drawGrowthBar(x, y, w, h, value) {
+                const growthValue = value || 0;
+                const absGrowth = Math.abs(growthValue);
+                const isPositive = growthValue >= 0;
+                const color = isPositive ? '#2d9a6e' : '#c9453b'; // 正增长绿色，负增长红色
+
+                // 布局参数 - 紧凑且美观
+                const leftPad = 16; // 左边距
+                const rightPad = 16; // 右边距
+                const numWidth = 100; // 数字预留宽度
+                const gap = 12; // 数字与进度条间距
+
+                // 计算进度条可用宽度
+                const barMaxWidth = w - leftPad - numWidth - gap - rightPad;
+
+                // 绘制边框
+                ctx.strokeStyle = '#c5d5e0';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, w, h);
+
+                // 绘制数字 - 左对齐，固定位置
+                ctx.fillStyle = color;
+                ctx.font = 'bold 26px "Noto Sans SC", "Microsoft YaHei", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                const numX = x + leftPad;
+                ctx.fillText(`${isPositive ? '+' : ''}${growthValue.toFixed(1)}`, numX, y + h / 2);
+
+                // 绘制进度条背景
+                const barX = numX + numWidth;
+                const barY = y + h / 2 - 6;
+                const barH = 12;
+                ctx.fillStyle = '#e5ebf0';
+                roundRect(ctx, barX, barY, barMaxWidth, barH, 5);
+                ctx.fill();
+
+                // 绘制进度条填充
+                const maxGrowth = 100;
+                const fillRatio = Math.min(absGrowth / maxGrowth, 1);
+                const fillWidth = Math.max(barMaxWidth * fillRatio, 0);
+
+                if (fillWidth > 0) {
+                    ctx.fillStyle = color;
+                    roundRect(ctx, barX, barY, fillWidth, barH, 5);
+                    ctx.fill();
+                }
+            }
+
+            // 绘制数据条（用于招商业务部进度显示）
+            function drawProgressBar(x, y, w, h, percent) {
+                const color = getColor(percent);
+                const displayPercent = Math.min(Math.max(percent, 0), 100);
+                const barPadding = 16;
+                const barWidthAvailable = w - barPadding * 2;
+                const barFillWidth = Math.max((displayPercent / 100) * barWidthAvailable, 0);
+                const barHeight = 14;
+                const barY = y + h * 0.3;
+                const barX = x + barPadding;
+
+                // 绘制边框
+                ctx.strokeStyle = '#c5d5e0';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, w, h);
+
+                // 进度条背景
+                ctx.fillStyle = '#e5ebf0';
+                roundRect(ctx, barX, barY, barWidthAvailable, barHeight, 6);
+                ctx.fill();
+
+                // 进度条填充
+                if (barFillWidth > 0) {
+                    ctx.fillStyle = color;
+                    roundRect(ctx, barX, barY, Math.max(barFillWidth, 6), barHeight, 6);
+                    ctx.fill();
+                }
+
+                // 百分比文字
+                ctx.fillStyle = color;
+                ctx.font = 'bold 20px Arial, "Noto Sans SC", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(percent.toFixed(1) + '%', x + w / 2, barY + barHeight + 20);
+            }
+
+            // 绘制表头 - 区分招商业务部和自营业务部
+            let headerY = y; // 保存表头起始位置
+            let headerRows = 1; // 默认单行表头
+
+            let x = padding;
+
+            if (isDirect) {
+                // ========== 自营业务部 - 两行表头 ==========
+                headerRows = 2;
+                const headerRowHeight = headerHeight;
+                const totalHeaderHeight = headerHeight * 2;
+
+                // 1. 省区列 - 合并两行
+                drawCell(x, y, colWidth, totalHeaderHeight, '省区', '#d5e4f5', '#1e3a5f', 28, true);
+                x += colWidth;
+
+                // 2. 销售额列 - 第一行（合并多列）
+                const salesWidth = 4 * colWidth;
+                drawCell(x, y, salesWidth, headerRowHeight, `${monthText}销售额（万元）`, '#d5e4f5', '#1e3a5f', 28, true);
+                x += salesWidth;
+
+                // 3. 总计列 - 合并两行
+                drawCell(x, y, colWidth, totalHeaderHeight, '总计', '#d5e4f5', '#1e3a5f', 28, true);
+                x += colWidth;
+
+                // 4. 月累计进度 - 合并两行
+                drawCell(x, y, colWidth, totalHeaderHeight, `${monthText}累计\n销售进度`, '#d5e4f5', '#1e3a5f', 24, true);
+                x += colWidth;
+
+                // 5. D累计进度 - 合并两行
+                drawCell(x, y, colWidth, totalHeaderHeight, `${dSegText}累计\n销售进度`, '#d5e4f5', '#1e3a5f', 24, true);
+                x += colWidth;
+
+                // 6. vs25均值增长额 - 合并两行，使用更宽的列宽
+                drawCell(x, y, growthColWidth, totalHeaderHeight, 'vs25均值\n增长额', '#d5e4f5', '#1e3a5f', 24, true);
+
+                // 绘制第二行表头（产品名称）
+                x = padding + colWidth;
+                ['吡美莫司', '火把花根', '皮肤处方药', '皮肤非药'].forEach((name) => {
+                    drawCell(x, headerY + headerRowHeight, colWidth, headerRowHeight, name, '#e8f0f5', '#556677', 24, true);
+                    x += colWidth;
+                });
+
+                y = headerY + totalHeaderHeight;
+            } else {
+                // ========== 招商业务部 - 单行表头 ==========
+                drawCell(x, y, colWidth, headerHeight, '区域', '#d5e4f5', '#1e3a5f', 28, true);
+                x += colWidth;
+
+                drawCell(x, y, colWidth, headerHeight, `${monthText}指标`, '#d5e4f5', '#1e3a5f', 26, true);
+                x += colWidth;
+
+                drawCell(x, y, colWidth, headerHeight, `${monthText}累计销售额`, '#d5e4f5', '#1e3a5f', 26, true);
+                x += colWidth;
+
+                drawCell(x, y, colWidth, headerHeight, `${monthText}销售进度`, '#d5e4f5', '#1e3a5f', 24, true);
+                x += colWidth;
+
+                drawCell(x, y, colWidth, headerHeight, `${dSegText}指标`, '#d5e4f5', '#1e3a5f', 24, true);
+                x += colWidth;
+
+                drawCell(x, y, colWidth, headerHeight, `${dSegText}累计销售额`, '#d5e4f5', '#1e3a5f', 24, true);
+                x += colWidth;
+
+                drawCell(x, y, colWidth, headerHeight, `${dSegText}销售进度`, '#d5e4f5', '#1e3a5f', 24, true);
+
+                y = headerY + headerHeight;
+            }
+
+            // 绘制数据行
+            regionDataList.forEach((rowData, idx) => {
+                x = padding;
+                const bgColor = idx % 2 === 0 ? '#ffffff' : '#f8fbff';
+
+                if (isDirect) {
+                    // ========== 自营业务部数据行 ==========
+                    // 省区列
+                    drawCell(x, y, colWidth, rowHeight, rowData.region, bgColor, '#1e3a5f', 26, true);
+                    x += colWidth;
+
+                    // 产品销售额
+                    rowData.values.forEach(v => {
+                        drawCell(x, y, colWidth, rowHeight, v.toString(), bgColor, '#1a2738', 26, false);
+                        x += colWidth;
+                    });
+
+                    // 总计列
+                    drawCell(x, y, colWidth, rowHeight, rowData.rowTotal.toString(), bgColor, '#1a2738', 26, true);
+                    x += colWidth;
+
+                    // 月累计进度饼图
+                    const pie1X = x + colWidth / 2;
+                    const pie1Y = y + rowHeight / 2;
+                    drawPieChart(pie1X, pie1Y, 40, rowData.percent);
+                    ctx.strokeStyle = '#c5d5e0';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x, y, colWidth, rowHeight);
+                    x += colWidth;
+
+                    // D段进度饼图
+                    const pie2X = x + colWidth / 2;
+                    const pie2Y = y + rowHeight / 2;
+                    drawPieChart(pie2X, pie2Y, 40, rowData.dPercent);
+                    ctx.strokeStyle = '#c5d5e0';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x, y, colWidth, rowHeight);
+                    x += colWidth;
+
+                    // vs25均值增长额列 - 使用增长额数据条，更宽的列宽
+                    drawGrowthBar(x, y, growthColWidth, rowHeight, rowData.growth);
+                } else {
+                    // ========== 招商业务部数据行 ==========
+                    drawCell(x, y, colWidth, rowHeight, rowData.region, bgColor, '#1e3a5f', 26, true);
+                    x += colWidth;
+
+                    // 月指标
+                    drawCell(x, y, colWidth, rowHeight, rowData.target.toString(), bgColor, '#1a2738', 26, false);
+                    x += colWidth;
+
+                    // 月累计达成
+                    drawCell(x, y, colWidth, rowHeight, rowData.rowTotal.toString(), bgColor, '#1a2738', 26, true);
+                    x += colWidth;
+
+                    // 月销售进度数据条
+                    drawProgressBar(x, y, colWidth, rowHeight, rowData.percent);
+                    x += colWidth;
+
+                    // C段指标
+                    drawCell(x, y, colWidth, rowHeight, rowData.dTarget.toString(), bgColor, '#1a2738', 26, false);
+                    x += colWidth;
+
+                    // C段累计达成
+                    drawCell(x, y, colWidth, rowHeight, rowData.dSales.toFixed(1).toString(), bgColor, '#1a2738', 26, true);
+                    x += colWidth;
+
+                    // C段销售进度数据条
+                    drawProgressBar(x, y, colWidth, rowHeight, rowData.dPercent);
+                }
+
+                y += rowHeight;
+            });
+
+            // 绘制合计行
+            x = padding;
+            const footerY = y;
+
+            // 合计行背景渐变
+            const gradient = ctx.createLinearGradient(x, y, x + tableWidth, y);
+            gradient.addColorStop(0, '#fef8ed');
+            gradient.addColorStop(1, '#fef3e0');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x, y, tableWidth, rowHeight);
+
+            drawCell(x, y, colWidth, rowHeight, tabName, 'transparent', '#b8860b', 26, true);
+            x += colWidth;
+
+            if (isDirect) {
+                // 自营业务部合计行
+                products.forEach((_, i) => {
+                    const productTotal = regions.reduce((sum, r) => sum + (data[r]?.[products[i]] || 0), 0);
+                    drawCell(x, y, colWidth, rowHeight, productTotal.toString(), 'transparent', '#1a2738', 26, false);
+                    x += colWidth;
+                });
+
+                drawCell(x, y, colWidth, rowHeight, grandTotal.toString(), 'transparent', '#1a2738', 26, true);
+                x += colWidth;
+
+                drawPieChart(x + colWidth / 2, y + rowHeight / 2, 40, totalPercent);
+                ctx.strokeStyle = '#c5d5e0';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, colWidth, rowHeight);
+                x += colWidth;
+
+                drawPieChart(x + colWidth / 2, y + rowHeight / 2, 40, totalDPercent);
+                ctx.strokeStyle = '#c5d5e0';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, colWidth, rowHeight);
+                x += colWidth;
+
+                // vs25均值增长额合计 - 使用增长额数据条，更宽的列宽
+                const grandGrowth = grandTotal - grandLastYear;
+                drawGrowthBar(x, y, growthColWidth, rowHeight, grandGrowth);
+            } else {
+                // 招商业务部合计行
+                // 月指标
+                drawCell(x, y, colWidth, rowHeight, grandTarget.toFixed(1).toString(), 'transparent', '#1a2738', 26, false);
+                x += colWidth;
+
+                // 月累计达成
+                drawCell(x, y, colWidth, rowHeight, grandTotal.toFixed(1).toString(), 'transparent', '#1a2738', 26, true);
+                x += colWidth;
+
+                // 月销售进度数据条
+                drawProgressBar(x, y, colWidth, rowHeight, totalPercent);
+                x += colWidth;
+
+                // C段指标
+                drawCell(x, y, colWidth, rowHeight, grandDTarget.toFixed(1).toString(), 'transparent', '#1a2738', 26, false);
+                x += colWidth;
+
+                // C段累计达成
+                drawCell(x, y, colWidth, rowHeight, grandDSales.toFixed(1).toString(), 'transparent', '#1a2738', 26, true);
+                x += colWidth;
+
+                // C段销售进度数据条
+                drawProgressBar(x, y, colWidth, rowHeight, totalDPercent);
+            }
+
+            // 合计行顶部边框 - 更粗更明显
+            ctx.strokeStyle = '#c9a227';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(padding, footerY);
+            ctx.lineTo(padding + tableWidth, footerY);
+            ctx.stroke();
+
+            // 下载图片 - 最高质量
+            const link = document.createElement('a');
+            const dateStr = new Date().toLocaleDateString().replace(/\//g, '-');
+            link.download = `${tabName}_${monthText}_销售报表_${dateStr}.png`;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initData();
+
+            // 获取当前活动 tab，而不是硬编码
+            const isDirectActive = document.getElementById('direct-tab').classList.contains('active');
+            const activeTab = isDirectActive ? 'direct' : 'investment';
+
+            // 根据活动 tab 初始化段选择器
+            updateSegSelector(activeTab);
+            updateTableHeaders();
+            renderMetricsPanel('direct');
+            renderMetricsPanel('investment');
+            renderDirectTable();
+            renderInvestmentTable();
+        });
+    </script>
+</body>
+</html>
