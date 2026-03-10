@@ -1831,7 +1831,7 @@
             const radius = size / 2;
             const centerX = size / 2;
             const centerY = size / 2;
-            const innerRadius = size * 0.3;
+            const innerRadius = size * 0.38;  // 增大内径比例，使环形更细
 
             // 绘制进度环
             let pathData = '';
@@ -1911,7 +1911,7 @@
             const radius = size / 2;
             const centerX = size / 2;
             const centerY = size / 2;
-            const innerRadius = size * 0.28;
+            const innerRadius = size * 0.36;  // 增大内径比例，使环形更细
 
             // 绘制进度环
             let pathData = '';
@@ -2769,7 +2769,7 @@
             // 绘制环形饼图 - 优化版本
             function drawPieChart(centerX, centerY, radius, percent) {
                 const color = getColor(percent);
-                const innerR = radius * 0.5;
+                const innerR = radius * 0.65;  // 增大内径比例，使环形更细
                 const displayPercent = Math.min(percent, 100);
                 const angle = (displayPercent / 100) * Math.PI * 2;
 
