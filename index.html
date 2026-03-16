@@ -1968,6 +1968,10 @@
             return regions.reduce((sum, region) => sum + (data[region]?.[product] || 0), 0);
         }
 
+        function formatDecimal(value) {
+            return (Number(value) || 0).toFixed(2);
+        }
+
         // 渲染指标维护面板（表格形式）
         function renderMetricsPanel(type) {
             const container = document.getElementById(type + '-metrics-container');
@@ -2447,7 +2451,7 @@
                     tbodyHtml += `<td><input type="number" class="cell-input" value="${directData[data.region]?.[p] || 0}"
                         oninput="updateDirectData('${data.region}', '${p}', this.value)"></td>`;
                 });
-                tbodyHtml += `<td><strong>${data.rowTotal}</strong></td>`;
+                tbodyHtml += `<td><strong>${formatDecimal(data.rowTotal)}</strong></td>`;
                 tbodyHtml += `<td>${getPieChartHtml(data.percent)}</td>`;
                 tbodyHtml += `<td>${getPieChartHtml(data.dPercent)}</td>`;
                 tbodyHtml += `<td>${getGrowthBarHtml(data.growth, grandLastYear)}</td>`;
@@ -2457,15 +2461,15 @@
             tbody.innerHTML = tbodyHtml;
 
             // 合计行
-            const totalPercent = grandTarget > 0 ? ((grandTotal / grandTarget) * 100).toFixed(2) : '0.0';
-            const totalDPercent = grandDTarget > 0 ? ((grandDSales / grandDTarget) * 100).toFixed(2) : '0.0';
+            const totalPercent = grandTarget > 0 ? ((grandTotal / grandTarget) * 100).toFixed(2) : '0.00';
+            const totalDPercent = grandDTarget > 0 ? ((grandDSales / grandDTarget) * 100).toFixed(2) : '0.00';
             const totalGrowth = grandTotal - grandLastYear; // 总增长额 = 总计 - 25年均值
 
             let tfootHtml = '<tr><td>自营业务部</td>';
             DIRECT_PRODUCTS.forEach(p => {
-                tfootHtml += `<td>${calculateProductTotal(directData, directRegions, p)}</td>`;
+                tfootHtml += `<td>${formatDecimal(calculateProductTotal(directData, directRegions, p))}</td>`;
             });
-            tfootHtml += `<td>${grandTotal}</td>`;
+            tfootHtml += `<td>${formatDecimal(grandTotal)}</td>`;
             tfootHtml += `<td>${getPieChartHtml(totalPercent)}</td>`;
             tfootHtml += `<td>${getPieChartHtml(totalDPercent)}</td>`;
             tfootHtml += `<td>${getGrowthBarHtml(totalGrowth, grandLastYear)}</td>`;
@@ -2797,7 +2801,7 @@
                 ctx.font = `bold ${fontSize}px "Noto Sans SC", "Microsoft YaHei", sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(Math.round(percent) + '%', centerX, centerY);
+                ctx.fillText(formatDecimal(percent) + '%', centerX, centerY);
             }
 
             // 圆角矩形辅助函数
@@ -2982,12 +2986,12 @@
 
                     // 产品销售额
                     rowData.values.forEach(v => {
-                        drawCell(x, y, colWidth, rowHeight, v.toString(), bgColor, '#1a2738', 26, false);
+                        drawCell(x, y, colWidth, rowHeight, formatDecimal(v), bgColor, '#1a2738', 26, false);
                         x += colWidth;
                     });
 
                     // 总计列
-                    drawCell(x, y, colWidth, rowHeight, rowData.rowTotal.toString(), bgColor, '#1a2738', 26, true);
+                    drawCell(x, y, colWidth, rowHeight, formatDecimal(rowData.rowTotal), bgColor, '#1a2738', 26, true);
                     x += colWidth;
 
                     // 月累计进度饼图
@@ -3060,11 +3064,11 @@
                 // 自营业务部合计行
                 products.forEach((_, i) => {
                     const productTotal = regions.reduce((sum, r) => sum + (data[r]?.[products[i]] || 0), 0);
-                    drawCell(x, y, colWidth, rowHeight, productTotal.toString(), 'transparent', '#1a2738', 26, false);
+                    drawCell(x, y, colWidth, rowHeight, formatDecimal(productTotal), 'transparent', '#1a2738', 26, false);
                     x += colWidth;
                 });
 
-                drawCell(x, y, colWidth, rowHeight, grandTotal.toString(), 'transparent', '#1a2738', 26, true);
+                drawCell(x, y, colWidth, rowHeight, formatDecimal(grandTotal), 'transparent', '#1a2738', 26, true);
                 x += colWidth;
 
                 drawPieChart(x + colWidth / 2, y + rowHeight / 2, 40, totalPercent);
