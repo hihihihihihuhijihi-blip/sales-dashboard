@@ -1411,20 +1411,20 @@
                     tbodyHtml += `<td><input type="number" class="cell-input" value="${investmentData[region]?.[p] || 0}"
                         oninput="updateInvestmentData('${region}', '${p}', this.value)"></td>`;
                 });
-                tbodyHtml += `<td><strong>${rowTotal.toFixed(1)}</strong></td>`;
+                tbodyHtml += `<td><strong>${rowTotal.toFixed(2)}</strong></td>`;
                 // 月度指标（当前区域，可编辑）
                 tbodyHtml += `<td><input type="number" class="cell-input" value="${target}"
                     onchange="updateRegionTarget('investment', '${region}', 'target', this.value); updateProductTableProgress('${region}');"></td>`;
                 // 月度累计销售额（当前区域，可编辑）
-                tbodyHtml += `<td><input type="number" class="cell-input" value="${monthlySales.toFixed(1)}"
+                tbodyHtml += `<td><input type="number" class="cell-input" value="${monthlySales.toFixed(2)}"
                     onchange="updateRegionMonthlySales('investment', '${region}', this.value); updateProductTableProgress('${region}');"></td>`;
                 // C段指标（当前区域，可编辑）
                 tbodyHtml += `<td><input type="number" class="cell-input" value="${cTarget}"
                     onchange="updateRegionTarget('investment', '${region}', 'dTarget', this.value);"></td>`;
                 // C段累计销售额（自动计算，只读）
-                tbodyHtml += `<td id="product-csales-${region}" style="text-align: center; font-weight: 600; color: #1e3a5f;">${cSales.toFixed(1)}</td>`;
+                tbodyHtml += `<td id="product-csales-${region}" style="text-align: center; font-weight: 600; color: #1e3a5f;">${cSales.toFixed(2)}</td>`;
                 // 销售进度
-                tbodyHtml += `<td id="product-progress-${region}">${progress.toFixed(1)}%</td>`;
+                tbodyHtml += `<td id="product-progress-${region}">${progress.toFixed(2)}%</td>`;
                 tbodyHtml += '</tr>';
             });
 
@@ -1444,7 +1444,7 @@
             const target = getCurrentTarget('investment', region);
             const monthlySales = investmentMonthlySales[selectedMonth]?.[region] || 0;
             const progress = target > 0 ? ((monthlySales / target) * 100) : 0;
-            progressCell.textContent = progress.toFixed(1) + '%';
+            progressCell.textContent = progress.toFixed(2) + '%';
 
             // 同时更新C段累计销售额显示
             updateProductCSalesDisplay(region);
@@ -1455,7 +1455,7 @@
             const csalesCell = document.getElementById('product-csales-' + region);
             if (csalesCell) {
                 const cSales = getCurrentCSales(region);
-                csalesCell.textContent = cSales.toFixed(1);
+                csalesCell.textContent = cSales.toFixed(2);
             }
         }
 
@@ -1817,7 +1817,7 @@
                         font-weight: 600;
                         color: ${percentValue > 100 ? '#1a2738' : color};
                         min-width: 38px;
-                    ">${percentValue.toFixed(1)}%</span>
+                    ">${percentValue.toFixed(2)}%</span>
                 </div>
             `;
         }
@@ -2027,7 +2027,7 @@
                             <td style="padding: 6px; border: 1px solid #e1e8f0; text-align: center;">
                                 <input type="number"
                                        style="width: 70px; padding: 4px 8px; border: 1px solid #e1e8f0; border-radius: 4px; font-size: 13px; text-align: center; font-weight: 600; color: #2d9a6e;"
-                                       value="${prevMonthSales.toFixed(1)}"
+                                       value="${prevMonthSales.toFixed(2)}"
                                        oninput="updatePrevMonthSales('${type}', '${region}', this.value)">
                             </td>
                         ` : ''}
@@ -2043,7 +2043,7 @@
                                    value="${dTargetValue}"
                                    oninput="updateRegionTarget('${type}', '${region}', 'dTarget', this.value)">
                         </td>
-                        <td style="padding: 8px 12px; border: 1px solid #e1e8f0; text-align: center; background: #f0f7ff; font-weight: 600; color: #1e3a5f;" id="d-sales-${type}-${region}">${dSales.toFixed(1)}</td>
+                        <td style="padding: 8px 12px; border: 1px solid #e1e8f0; text-align: center; background: #f0f7ff; font-weight: 600; color: #1e3a5f;" id="d-sales-${type}-${region}">${dSales.toFixed(2)}</td>
                         <td style="padding: 6px; border: 1px solid #e1e8f0; text-align: center;">
                             <input type="number" class="metric-input"
                                    style="width: 70px; padding: 4px 8px;"
@@ -2101,7 +2101,7 @@
                                 <td style="padding: 4px; border: 1px solid #e1e8f0; text-align: center;">
                                     <input type="number"
                                            style="width: 100%; padding: 4px 6px; border: ${isCurrentMonth && !isFutureMonth ? '2px solid #c9a227' : '1px solid #e1e8f0'}; border-radius: 4px; font-size: 12px; text-align: center; ${isCurrentMonth && !isFutureMonth ? 'background: #fffaf0; font-weight: 600;' : ''} ${isFutureMonth ? 'background: #f5f5f5; color: #999; cursor: not-allowed;' : ''}"
-                                           value="${isFutureMonth ? 0 : value.toFixed(1)}"
+                                           value="${isFutureMonth ? 0 : value.toFixed(2)}"
                                            ${isFutureMonth ? 'disabled' : ''}
                                            ${!isFutureMonth ? `oninput="updateInvestmentMonthSales('${region}', ${month}, this.value)"` : ''}>
                                 </td>
@@ -2155,7 +2155,7 @@
                         const inputCell = cells[6];
                         const input = inputCell.querySelector('input');
                         if (input) {
-                            input.value = parseFloat(value).toFixed(1);
+                            input.value = parseFloat(value).toFixed(2);
                         }
                     }
                 }
@@ -2181,7 +2181,7 @@
                         const inputCell = cells[monthIndex];
                         const input = inputCell.querySelector('input');
                         if (input) {
-                            input.value = parseFloat(value).toFixed(1);
+                            input.value = parseFloat(value).toFixed(2);
                         }
                     }
                 }
@@ -2195,7 +2195,7 @@
                 const dSales = getCurrentDSales(type, region);
                 const cell = document.getElementById(`d-sales-${type}-${region}`);
                 if (cell) {
-                    cell.textContent = dSales.toFixed(1);
+                    cell.textContent = dSales.toFixed(2);
                 }
             });
         }
@@ -2457,8 +2457,8 @@
             tbody.innerHTML = tbodyHtml;
 
             // 合计行
-            const totalPercent = grandTarget > 0 ? ((grandTotal / grandTarget) * 100).toFixed(1) : '0.0';
-            const totalDPercent = grandDTarget > 0 ? ((grandDSales / grandDTarget) * 100).toFixed(1) : '0.0';
+            const totalPercent = grandTarget > 0 ? ((grandTotal / grandTarget) * 100).toFixed(2) : '0.0';
+            const totalDPercent = grandDTarget > 0 ? ((grandDSales / grandDTarget) * 100).toFixed(2) : '0.0';
             const totalGrowth = grandTotal - grandLastYear; // 总增长额 = 总计 - 25年均值
 
             let tfootHtml = '<tr><td>自营业务部</td>';
@@ -2486,7 +2486,7 @@
 
             return `
                 <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-                    <span style="color: ${color}; font-weight: 600;">${isPositive ? '+' : ''}${growthValue.toFixed(1)}</span>
+                    <span style="color: ${color}; font-weight: 600;">${isPositive ? '+' : ''}${growthValue.toFixed(2)}</span>
                     <div style="width: 60px; height: 8px; background: #e5ebf0; border-radius: 4px; position: relative;">
                         <div style="width: ${Math.min(barWidth, 100)}%; height: 100%; background: ${color}; border-radius: 4px;"></div>
                     </div>
@@ -2540,11 +2540,11 @@
                     <td>${data.region}</td>
                     <td><input type="number" class="cell-input" value="${data.target}"
                         onchange="updateRegionTarget('investment', '${data.region}', 'target', this.value)"></td>
-                    <td><strong>${data.rowTotal.toFixed(1)}</strong></td>
+                    <td><strong>${data.rowTotal.toFixed(2)}</strong></td>
                     <td>${getProgressBarHtml(data.percent)}</td>
-                    <td><input type="number" class="cell-input" value="${data.dTarget.toFixed(1)}"
+                    <td><input type="number" class="cell-input" value="${data.dTarget.toFixed(2)}"
                         onchange="updateRegionTarget('investment', '${data.region}', 'dTarget', this.value)"></td>
-                    <td>${data.dSales.toFixed(1)}</td>
+                    <td>${data.dSales.toFixed(2)}</td>
                     <td>${getProgressBarHtml(data.dPercent)}</td>
                 </tr>`;
             });
@@ -2557,11 +2557,11 @@
 
             let tfootHtml = `<tr>
                 <td>招商业务部</td>
-                <td>${grandTarget.toFixed(1)}</td>
-                <td>${grandTotal.toFixed(1)}</td>
+                <td>${grandTarget.toFixed(2)}</td>
+                <td>${grandTotal.toFixed(2)}</td>
                 <td>${getProgressBarHtml(totalPercent)}</td>
-                <td>${grandDTarget.toFixed(1)}</td>
-                <td>${grandDSales.toFixed(1)}</td>
+                <td>${grandDTarget.toFixed(2)}</td>
+                <td>${grandDSales.toFixed(2)}</td>
                 <td>${getProgressBarHtml(totalDPercent)}</td>
             </tr>`;
 
@@ -2600,7 +2600,7 @@
                     const totalCell = row.querySelectorAll('td')[4];
                     if (totalCell) {
                         const newTotal = calculateRowTotal(investmentData, region, INVESTMENT_PRODUCTS);
-                        totalCell.innerHTML = `<strong>${newTotal.toFixed(1)}</strong>`;
+                        totalCell.innerHTML = `<strong>${newTotal.toFixed(2)}</strong>`;
                     }
                 }
             });
@@ -2842,7 +2842,7 @@
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'middle';
                 const numX = x + leftPad;
-                ctx.fillText(`${isPositive ? '+' : ''}${growthValue.toFixed(1)}`, numX, y + h / 2);
+                ctx.fillText(`${isPositive ? '+' : ''}${growthValue.toFixed(2)}`, numX, y + h / 2);
 
                 // 绘制进度条背景
                 const barX = numX + numWidth;
@@ -2897,7 +2897,7 @@
                 ctx.font = 'bold 20px Arial, "Noto Sans SC", sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(percent.toFixed(1) + '%', x + w / 2, barY + barHeight + 20);
+                ctx.fillText(percent.toFixed(2) + '%', x + w / 2, barY + barHeight + 20);
             }
 
             // 绘制表头 - 区分招商业务部和自营业务部
@@ -3032,7 +3032,7 @@
                     x += colWidth;
 
                     // C段累计达成
-                    drawCell(x, y, colWidth, rowHeight, rowData.dSales.toFixed(1).toString(), bgColor, '#1a2738', 26, true);
+                    drawCell(x, y, colWidth, rowHeight, rowData.dSales.toFixed(2).toString(), bgColor, '#1a2738', 26, true);
                     x += colWidth;
 
                     // C段销售进度数据条
@@ -3085,11 +3085,11 @@
             } else {
                 // 招商业务部合计行
                 // 月指标
-                drawCell(x, y, colWidth, rowHeight, grandTarget.toFixed(1).toString(), 'transparent', '#1a2738', 26, false);
+                drawCell(x, y, colWidth, rowHeight, grandTarget.toFixed(2).toString(), 'transparent', '#1a2738', 26, false);
                 x += colWidth;
 
                 // 月累计达成
-                drawCell(x, y, colWidth, rowHeight, grandTotal.toFixed(1).toString(), 'transparent', '#1a2738', 26, true);
+                drawCell(x, y, colWidth, rowHeight, grandTotal.toFixed(2).toString(), 'transparent', '#1a2738', 26, true);
                 x += colWidth;
 
                 // 月销售进度数据条
@@ -3097,11 +3097,11 @@
                 x += colWidth;
 
                 // C段指标
-                drawCell(x, y, colWidth, rowHeight, grandDTarget.toFixed(1).toString(), 'transparent', '#1a2738', 26, false);
+                drawCell(x, y, colWidth, rowHeight, grandDTarget.toFixed(2).toString(), 'transparent', '#1a2738', 26, false);
                 x += colWidth;
 
                 // C段累计达成
-                drawCell(x, y, colWidth, rowHeight, grandDSales.toFixed(1).toString(), 'transparent', '#1a2738', 26, true);
+                drawCell(x, y, colWidth, rowHeight, grandDSales.toFixed(2).toString(), 'transparent', '#1a2738', 26, true);
                 x += colWidth;
 
                 // C段销售进度数据条
