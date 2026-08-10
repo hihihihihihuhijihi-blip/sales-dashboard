@@ -510,7 +510,7 @@
             font-weight: 700;
         }
 
-        /* 设置每列最小宽度 - 自营业务部9列 */
+        /* 设置每列最小宽度 - 自营业务部10列 */
         #direct-table col {
             min-width: 90px;
         }
@@ -854,6 +854,7 @@
                             <col style="width: 100px;">  <!-- 皮肤非药 -->
                             <col style="width: 90px;">   <!-- 总计 -->
                             <col style="width: 110px;">  <!-- 月销售进度 -->
+                            <col style="width: 110px;">  <!-- D段累计销售额 -->
                             <col style="width: 110px;">  <!-- D段进度 -->
                             <col style="width: 140px;">  <!-- vs25均值增长额 -->
                         </colgroup>
@@ -863,6 +864,7 @@
                                 <th colspan="4" id="direct-sales-header">3月销售额（万元）</th>
                                 <th rowspan="2">总计</th>
                                 <th rowspan="2" id="direct-progress-header">3月累计<br>销售进度</th>
+                                <th rowspan="2" id="direct-dsales-header">D2累计<br>销售额/万</th>
                                 <th rowspan="2" id="direct-dprogress-header">D2累计<br>销售进度</th>
                                 <th rowspan="2">vs25均值<br>增长额</th>
                             </tr>
@@ -1692,6 +1694,7 @@
 
             document.getElementById('direct-sales-header').textContent = monthText + '销售额（万元）';
             document.getElementById('direct-progress-header').innerHTML = monthText + '累计<br>销售进度';
+            document.getElementById('direct-dsales-header').innerHTML = dSegText + '累计<br>销售额/万';
             document.getElementById('direct-dprogress-header').innerHTML = dSegText + '累计<br>销售进度';
 
             // 招商业务部新表头
@@ -2436,6 +2439,7 @@
                     lastYear,
                     growth,
                     dTarget,
+                    dSales,
                     percent,
                     dPercent
                 });
@@ -2453,6 +2457,7 @@
                 });
                 tbodyHtml += `<td><strong>${formatDecimal(data.rowTotal)}</strong></td>`;
                 tbodyHtml += `<td>${getPieChartHtml(data.percent)}</td>`;
+                tbodyHtml += `<td><strong>${formatDecimal(data.dSales)}</strong></td>`;
                 tbodyHtml += `<td>${getPieChartHtml(data.dPercent)}</td>`;
                 tbodyHtml += `<td>${getGrowthBarHtml(data.growth, grandLastYear)}</td>`;
                 tbodyHtml += '</tr>';
@@ -2471,6 +2476,7 @@
             });
             tfootHtml += `<td>${formatDecimal(grandTotal)}</td>`;
             tfootHtml += `<td>${getPieChartHtml(totalPercent)}</td>`;
+            tfootHtml += `<td>${formatDecimal(grandDSales)}</td>`;
             tfootHtml += `<td>${getPieChartHtml(totalDPercent)}</td>`;
             tfootHtml += `<td>${getGrowthBarHtml(totalGrowth, grandLastYear)}</td>`;
             tfootHtml += '</tr>';
@@ -2634,10 +2640,10 @@
             let growthColWidth;
 
             if (isDirect) {
-                // 自营业务部：9列，但增长额列占用1.8倍宽度
-                // 标准列数 = 8 (省区+4产品+总计+2进度)
+                // 自营业务部：10列，但增长额列占用1.8倍宽度
+                // 标准列数 = 9 (省区+4产品+总计+2进度+D段累计销售额)
                 // 增长额列 = 1.8倍宽度
-                const normalColCount = 8;
+                const normalColCount = 9;
                 const growthColMultiplier = 1.8;
                 colWidth = tableWidth / (normalColCount + growthColMultiplier);
                 growthColWidth = colWidth * growthColMultiplier;
@@ -2933,11 +2939,15 @@
                 drawCell(x, y, colWidth, totalHeaderHeight, `${monthText}累计\n销售进度`, '#d5e4f5', '#1e3a5f', 24, true);
                 x += colWidth;
 
-                // 5. D累计进度 - 合并两行
+                // 5. D累计销售额 - 合并两行
+                drawCell(x, y, colWidth, totalHeaderHeight, `${dSegText}累计\n销售额/万`, '#d5e4f5', '#1e3a5f', 24, true);
+                x += colWidth;
+
+                // 6. D累计进度 - 合并两行
                 drawCell(x, y, colWidth, totalHeaderHeight, `${dSegText}累计\n销售进度`, '#d5e4f5', '#1e3a5f', 24, true);
                 x += colWidth;
 
-                // 6. vs25均值增长额 - 合并两行，使用更宽的列宽
+                // 7. vs25均值增长额 - 合并两行，使用更宽的列宽
                 drawCell(x, y, growthColWidth, totalHeaderHeight, 'vs25均值\n增长额', '#d5e4f5', '#1e3a5f', 24, true);
 
                 // 绘制第二行表头（产品名称）
@@ -3001,6 +3011,10 @@
                     ctx.strokeStyle = '#c5d5e0';
                     ctx.lineWidth = 2;
                     ctx.strokeRect(x, y, colWidth, rowHeight);
+                    x += colWidth;
+
+                    // D段累计销售额
+                    drawCell(x, y, colWidth, rowHeight, formatDecimal(rowData.dSales), bgColor, '#1a2738', 26, true);
                     x += colWidth;
 
                     // D段进度饼图
@@ -3075,6 +3089,9 @@
                 ctx.strokeStyle = '#c5d5e0';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(x, y, colWidth, rowHeight);
+                x += colWidth;
+
+                drawCell(x, y, colWidth, rowHeight, formatDecimal(grandDSales), 'transparent', '#1a2738', 26, true);
                 x += colWidth;
 
                 drawPieChart(x + colWidth / 2, y + rowHeight / 2, 40, totalDPercent);
