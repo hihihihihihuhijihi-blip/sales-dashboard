@@ -510,7 +510,7 @@
             font-weight: 700;
         }
 
-        /* 设置每列最小宽度 - 自营业务部10列 */
+        /* 设置每列最小宽度 - 自营业务部11列 */
         #direct-table col {
             min-width: 90px;
         }
@@ -848,9 +848,10 @@
                     <table class="data-table" id="direct-table">
                         <colgroup>
                             <col style="width: 100px;">  <!-- 省区 -->
+                            <col style="width: 100px;">  <!-- 沙瑞环素 -->
                             <col style="width: 100px;">  <!-- 吡美莫司 -->
-                            <col style="width: 100px;">  <!-- 火把花根 -->
                             <col style="width: 110px;">  <!-- 皮肤处方药 -->
+                            <col style="width: 100px;">  <!-- 火把花根 -->
                             <col style="width: 100px;">  <!-- 皮肤非药 -->
                             <col style="width: 90px;">   <!-- 总计 -->
                             <col style="width: 110px;">  <!-- 月销售进度 -->
@@ -861,7 +862,7 @@
                         <thead>
                             <tr>
                                 <th rowspan="2">省区</th>
-                                <th colspan="4" id="direct-sales-header">3月销售额（万元）</th>
+                                <th colspan="5" id="direct-sales-header">3月销售额（万元）</th>
                                 <th rowspan="2">总计</th>
                                 <th rowspan="2" id="direct-progress-header">3月累计<br>销售进度</th>
                                 <th rowspan="2" id="direct-dsales-header">D2累计<br>销售额/万</th>
@@ -869,9 +870,10 @@
                                 <th rowspan="2">vs25均值<br>增长额</th>
                             </tr>
                             <tr>
+                                <th>沙瑞环素</th>
                                 <th>吡美莫司</th>
-                                <th>火把花根</th>
                                 <th>皮肤处方药</th>
+                                <th>火把花根</th>
                                 <th>皮肤非药</th>
                             </tr>
                         </thead>
@@ -985,7 +987,7 @@
     </div>
 
     <script>
-        const DIRECT_PRODUCTS = ['吡美莫司', '火把花根', '皮肤处方药', '皮肤非药'];
+        const DIRECT_PRODUCTS = ['沙瑞环素', '吡美莫司', '皮肤处方药', '火把花根', '皮肤非药'];
         const INVESTMENT_PRODUCTS = ['产品A', '产品B', '产品C'];
 
         // 可变区域列表
@@ -1108,7 +1110,7 @@
                     directRegions.forEach(region => {
                         if (!directMonthlyData[selectedMonth][region]) {
                             directMonthlyData[selectedMonth][region] = {
-                                '吡美莫司': 0, '火把花根': 0, '皮肤处方药': 0, '皮肤非药': 0
+                                '沙瑞环素': 0, '吡美莫司': 0, '皮肤处方药': 0, '火把花根': 0, '皮肤非药': 0
                             };
                         }
                         // 确保每个产品都有值（防止数据不完整）
@@ -1233,6 +1235,7 @@
                 directRegions.forEach(region => {
                     // 生成产品明细
                     directMonthlyData[m][region] = {
+                        '沙瑞环素': 0,
                         '吡美莫司': m === 3 ? 8 : Math.floor(Math.random() * 15),
                         '火把花根': m === 3 ? 0 : Math.floor(Math.random() * 10),
                         '皮肤处方药': m === 3 ? 0 : Math.floor(Math.random() * 10),
@@ -1617,7 +1620,7 @@
                 directMonthlyData[selectedMonth] = {};
                 directRegions.forEach(region => {
                     directMonthlyData[selectedMonth][region] = {
-                        '吡美莫司': 0, '火把花根': 0, '皮肤处方药': 0, '皮肤非药': 0
+                        '沙瑞环素': 0, '吡美莫司': 0, '皮肤处方药': 0, '火把花根': 0, '皮肤非药': 0
                     };
                 });
             }
@@ -2640,10 +2643,10 @@
             let growthColWidth;
 
             if (isDirect) {
-                // 自营业务部：10列，但增长额列占用1.8倍宽度
-                // 标准列数 = 9 (省区+4产品+总计+2进度+D段累计销售额)
+                // 自营业务部：产品列 + 5个标准列，增长额列占用1.8倍宽度
+                // 标准列：省区、各产品、总计、2进度、D段累计销售额
                 // 增长额列 = 1.8倍宽度
-                const normalColCount = 9;
+                const normalColCount = products.length + 5;
                 const growthColMultiplier = 1.8;
                 colWidth = tableWidth / (normalColCount + growthColMultiplier);
                 growthColWidth = colWidth * growthColMultiplier;
@@ -2927,7 +2930,7 @@
                 x += colWidth;
 
                 // 2. 销售额列 - 第一行（合并多列）
-                const salesWidth = 4 * colWidth;
+                const salesWidth = products.length * colWidth;
                 drawCell(x, y, salesWidth, headerRowHeight, `${monthText}销售额（万元）`, '#d5e4f5', '#1e3a5f', 28, true);
                 x += salesWidth;
 
@@ -2952,7 +2955,7 @@
 
                 // 绘制第二行表头（产品名称）
                 x = padding + colWidth;
-                ['吡美莫司', '火把花根', '皮肤处方药', '皮肤非药'].forEach((name) => {
+                products.forEach((name) => {
                     drawCell(x, headerY + headerRowHeight, colWidth, headerRowHeight, name, '#e8f0f5', '#556677', 24, true);
                     x += colWidth;
                 });
