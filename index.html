@@ -510,7 +510,7 @@
             font-weight: 700;
         }
 
-        /* 设置每列最小宽度 - 自营业务部11列 */
+        /* 设置每列最小宽度 - 自营业务部10列 */
         #direct-table col {
             min-width: 90px;
         }
@@ -848,7 +848,6 @@
                     <table class="data-table" id="direct-table">
                         <colgroup>
                             <col style="width: 100px;">  <!-- 省区 -->
-                            <col style="width: 100px;">  <!-- 沙瑞环素 -->
                             <col style="width: 100px;">  <!-- 吡美莫司 -->
                             <col style="width: 110px;">  <!-- 皮肤处方药 -->
                             <col style="width: 100px;">  <!-- 火把花根 -->
@@ -862,7 +861,7 @@
                         <thead>
                             <tr>
                                 <th rowspan="2">省区</th>
-                                <th colspan="5" id="direct-sales-header">3月销售额（万元）</th>
+                                <th colspan="4" id="direct-sales-header">3月销售额（万元）</th>
                                 <th rowspan="2">总计</th>
                                 <th rowspan="2" id="direct-progress-header">3月累计<br>销售进度</th>
                                 <th rowspan="2" id="direct-dsales-header">D2累计<br>销售额/万</th>
@@ -870,7 +869,6 @@
                                 <th rowspan="2">vs25均值<br>增长额</th>
                             </tr>
                             <tr>
-                                <th>沙瑞环素</th>
                                 <th>吡美莫司</th>
                                 <th>皮肤处方药</th>
                                 <th>火把花根</th>
@@ -987,7 +985,7 @@
     </div>
 
     <script>
-        const DIRECT_PRODUCTS = ['沙瑞环素', '吡美莫司', '皮肤处方药', '火把花根', '皮肤非药'];
+        const DIRECT_PRODUCTS = ['吡美莫司', '皮肤处方药', '火把花根', '皮肤非药'];
         const INVESTMENT_PRODUCTS = ['产品A', '产品B', '产品C'];
 
         // 可变区域列表
@@ -1090,6 +1088,15 @@
                     investmentRegions = data.investmentRegions || ['山东', '西南', '豫晋蒙', '华东', '西北', '东北', '江苏', '华南', '京津冀', '粤琼'];
                     directMonthlyData = data.directMonthlyData || {};
                     directMonthlySales = data.directMonthlySales || {};
+                    // 沙瑞环素暂不统计；保留明细，重算曾包含它的月度合计。
+                    Object.entries(directMonthlyData).forEach(([month, regions]) => {
+                        Object.entries(regions).forEach(([region, values]) => {
+                            if ('沙瑞环素' in values) {
+                                if (!directMonthlySales[month]) directMonthlySales[month] = {};
+                                directMonthlySales[month][region] = calculateRowTotal(directMonthlyData[month], region, DIRECT_PRODUCTS);
+                            }
+                        });
+                    });
                     directLastYear = data.directLastYear || {};
                     directTarget = data.directTarget || {};
                     directDTarget = data.directDTarget || {};
@@ -1110,7 +1117,7 @@
                     directRegions.forEach(region => {
                         if (!directMonthlyData[selectedMonth][region]) {
                             directMonthlyData[selectedMonth][region] = {
-                                '沙瑞环素': 0, '吡美莫司': 0, '皮肤处方药': 0, '火把花根': 0, '皮肤非药': 0
+                                '吡美莫司': 0, '皮肤处方药': 0, '火把花根': 0, '皮肤非药': 0
                             };
                         }
                         // 确保每个产品都有值（防止数据不完整）
@@ -1235,7 +1242,6 @@
                 directRegions.forEach(region => {
                     // 生成产品明细
                     directMonthlyData[m][region] = {
-                        '沙瑞环素': 0,
                         '吡美莫司': m === 3 ? 8 : Math.floor(Math.random() * 15),
                         '火把花根': m === 3 ? 0 : Math.floor(Math.random() * 10),
                         '皮肤处方药': m === 3 ? 0 : Math.floor(Math.random() * 10),
@@ -1620,7 +1626,7 @@
                 directMonthlyData[selectedMonth] = {};
                 directRegions.forEach(region => {
                     directMonthlyData[selectedMonth][region] = {
-                        '沙瑞环素': 0, '吡美莫司': 0, '皮肤处方药': 0, '火把花根': 0, '皮肤非药': 0
+                        '吡美莫司': 0, '皮肤处方药': 0, '火把花根': 0, '皮肤非药': 0
                     };
                 });
             }
